@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"golang.org/x/oauth2/clientcredentials"
+	"log"
 	"net/http"
+
 	"github.com/carlo-colombo/sopra/model"
+	"golang.org/x/oauth2/clientcredentials"
 )
 
 // OpenSkyClient is a client for the OpenSky Network API.
@@ -52,6 +54,7 @@ func (c *OpenSkyClient) GetStates() (*model.States, error) {
 // GetStatesWithBoundingBox retrieves flight states within a specified bounding box from the OpenSky Network API.
 func (c *OpenSkyClient) GetStatesWithBoundingBox(lamin, lomin, lamax, lomax float64) (*model.States, error) {
 	url := fmt.Sprintf("https://opensky-network.org/api/states/all?lamin=%f&lomin=%f&lamax=%f&lomax=%f", lamin, lomin, lamax, lomax)
+	log.Printf("Requesting states from OpenSky API: %s\n", url)
 	resp, err := c.httpClient.Get(url)
 	if err != nil {
 		return nil, err
