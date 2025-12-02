@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"github.com/carlo-colombo/sopra/config"
@@ -26,7 +27,7 @@ func NewServer(s *service.Service, cfg *config.Config) *Server {
 func (s *Server) Start() {
 	http.HandleFunc("/flights", s.getFlightsHandler)
 
-	port := ":8080" // TODO: Make configurable
+	port := fmt.Sprintf(":%d", s.config.Port)
 	log.Printf("Server starting on port %s", port)
 	if err := http.ListenAndServe(port, nil); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
