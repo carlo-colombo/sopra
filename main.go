@@ -2,10 +2,10 @@ package main
 
 import (
 	"log"
-	"sopra/client"
-	"sopra/config"
-	"sopra/server"
-	"sopra/service"
+	"github.com/carlo-colombo/sopra/client"
+	"github.com/carlo-colombo/sopra/config"
+	"github.com/carlo-colombo/sopra/server"
+	"github.com/carlo-colombo/sopra/service"
 )
 
 func main() {

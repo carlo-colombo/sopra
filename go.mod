@@ -1,4 +1,4 @@
-module sopra
+module github.com/carlo-colombo/sopra
 
 go 1.24.0
 

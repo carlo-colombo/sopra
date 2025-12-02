@@ -1,9 +1,9 @@
 package service
 
 import (
-	"sopra/client"
-	"sopra/haversine"
-	"sopra/model"
+	"github.com/carlo-colombo/sopra/client"
+	"github.com/carlo-colombo/sopra/haversine"
+	"github.com/carlo-colombo/sopra/model"
 )
 
 // Service is the main service for the application.

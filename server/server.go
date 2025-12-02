@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"sopra/config"
-	"sopra/service"
+	"github.com/carlo-colombo/sopra/config"
+	"github.com/carlo-colombo/sopra/service"
 )
 
 // Server holds the HTTP server and its dependencies.

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"golang.org/x/oauth2/clientcredentials"
 	"net/http"
-	"sopra/model"
+	"github.com/carlo-colombo/sopra/model"
 )
 
 // OpenSkyClient is a client for the OpenSky Network API.
