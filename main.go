@@ -14,8 +14,10 @@ func main() {
 		log.Fatalf("Error loading config: %v", err)
 	}
 
+	log.Printf(cfg.String()) // Print the loaded configuration
+
 	if cfg.OpenSkyClient.ID == "" || cfg.OpenSkyClient.Secret == "" {
-		log.Fatal("OPENREDISKY_CLIENT_ID and OPENREDISKY_CLIENT_SECRET environment variables are required")
+		log.Fatal("OPENSKY_CLIENT_ID and OPENSKY_CLIENT_SECRET environment variables are required")
 	}
 
 	openskyClient := client.NewOpenSkyClient(cfg.OpenSkyClient.ID, cfg.OpenSkyClient.Secret)
