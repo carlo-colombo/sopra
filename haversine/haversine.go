@@ -3,7 +3,7 @@ package haversine
 import "math"
 
 const (
-	earthRadius = 6371e3 // meters
+	earthRadiusKm = 6371 // kilometers
 )
 
 // BoundingBox represents a bounding box with min and max latitude and longitude.
@@ -14,9 +14,9 @@ type BoundingBox struct {
 	MaxLon float64
 }
 
-// GetBoundingBox calculates a bounding box for a given location and radius.
-func GetBoundingBox(lat, lon, radius float64) BoundingBox {
-	rad := radius / earthRadius
+// GetBoundingBox calculates a bounding box for a given location and radius in kilometers.
+func GetBoundingBox(lat, lon, radiusKm float64) BoundingBox {
+	rad := radiusKm / earthRadiusKm
 
 	minLat := lat - radToDeg(rad)
 	maxLat := lat + radToDeg(rad)

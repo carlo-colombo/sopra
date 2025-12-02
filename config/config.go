@@ -15,7 +15,7 @@ type Config struct {
 	Service struct {
 		Latitude  float64 `mapstructure:"latitude"`
 		Longitude float64 `mapstructure:"longitude"`
-		Radius    float64 `mapstructure:"radius"` // in meters
+		Radius    float64 `mapstructure:"radius"` // in kilometers
 	} `mapstructure:"service"`
 }
 
@@ -28,9 +28,9 @@ func LoadConfig() (*Config, error) {
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// Set default values
-	viper.SetDefault("service.latitude", 0.0)
-	viper.SetDefault("service.longitude", 0.0)
-	viper.SetDefault("service.radius", 100000.0)
+	viper.SetDefault("service.latitude", 47.3769)  // Zurich
+	viper.SetDefault("service.longitude", 8.5417) // Zurich
+	viper.SetDefault("service.radius", 100.0)      // 100km
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
