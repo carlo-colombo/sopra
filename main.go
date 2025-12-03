@@ -1,18 +1,26 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/carlo-colombo/sopra/client"
 	"github.com/carlo-colombo/sopra/config"
 	"github.com/carlo-colombo/sopra/server"
 	"github.com/carlo-colombo/sopra/service"
+	"github.com/spf13/pflag"
 	"log"
+	"os"
 )
 
 func main() {
+	pflag.Bool("print", false, "Print the result and logs to stdout")
+	pflag.Parse()
+
 	cfg, err := config.LoadConfig(".")
 	if err != nil {
 		log.Fatalf("Error loading config: %v", err)
 	}
+	config.ConfigureLogger(cfg.Print)
 
 	log.Printf("%s", cfg.String()) // Print the loaded configuration
 
@@ -27,6 +35,19 @@ func main() {
 	openskyClient := client.NewOpenSkyClient(cfg.OpenSkyClient.ID, cfg.OpenSkyClient.Secret)
 	flightawareClient := client.NewFlightAwareClient(cfg.FlightAware.APIKey)
 	appService := service.NewService(openskyClient, flightawareClient)
+
+	if cfg.Print {
+		flights, err := appService.GetFlightsInRadius(cfg.Service.Latitude, cfg.Service.Longitude, cfg.Service.Radius)
+		if err != nil {
+			log.Fatalf("Error getting flights: %v", err)
+		}
+		jsonFlights, err := json.MarshalIndent(flights, "", "  ")
+		if err != nil {
+			log.Fatalf("Error marshalling flights to JSON: %v", err)
+		}
+		fmt.Println(string(jsonFlights))
+		os.Exit(0)
+	}
 
 	httpServer := server.NewServer(appService, cfg)
 	httpServer.Start()

@@ -2,13 +2,14 @@ package config
 
 import (
 	"fmt"
-
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
 // Config holds the application's configuration.
 type Config struct {
-	Port int `mapstructure:"port"`
+	Print bool `mapstructure:"print"`
+	Port  int  `mapstructure:"port"`
 
 	OpenSkyClient struct {
 		ID     string `mapstructure:"id"`
@@ -33,6 +34,7 @@ func LoadConfig(path string) (*Config, error) {
 
 	// Bind environment variables
 
+	viper.BindPFlag("print", pflag.Lookup("print"))
 	viper.BindEnv("port", "PORT")
 
 	viper.BindEnv("opensky_client.id", "OPENSKY_CLIENT_ID")
@@ -98,7 +100,7 @@ func (c *Config) String() string {
 	return fmt.Sprintf(`
 
 	Configuration:
-
+	  Print: %t
 	  Port: %d
 
 	  OpenSky Client:
@@ -120,7 +122,7 @@ func (c *Config) String() string {
 	    Radius: %.2f km
 
 	`,
-
+		c.Print,
 		c.Port,
 
 		c.OpenSkyClient.ID, c.OpenSkyClient.Secret,

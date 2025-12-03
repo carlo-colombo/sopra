@@ -3,3 +3,4 @@ sopra
 *.exe
 *.test
 *.prof
+sopra.log
