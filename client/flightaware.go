@@ -41,7 +41,7 @@ func (c *FlightAwareClient) GetFlightInfo(icao24 string) (origin, destination st
 	// Construct the URL to get flight info by icao24. This is an assumption.
 	// The actual API might require a callsign or a different identifier.
 	// Assuming an endpoint like /flights/{icao24} or similar that returns flight details.
-	url := fmt.Sprintf("%s/flights/%s", c.baseURL, icao24)
+	url := fmt.Sprintf("%s/aircraft/%s/flights", c.baseURL, icao24)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
