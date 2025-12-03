@@ -1,11 +1,11 @@
 package main
 
 import (
-	"log"
 	"github.com/carlo-colombo/sopra/client"
 	"github.com/carlo-colombo/sopra/config"
 	"github.com/carlo-colombo/sopra/server"
 	"github.com/carlo-colombo/sopra/service"
+	"log"
 )
 
 func main() {
@@ -20,8 +20,13 @@ func main() {
 		log.Fatal("OPENSKY_CLIENT_ID and OPENSKY_CLIENT_SECRET environment variables are required")
 	}
 
+	if cfg.FlightAware.APIKey == "" {
+		log.Fatal("FLIGHTAWARE_API_KEY environment variable is required")
+	}
+
 	openskyClient := client.NewOpenSkyClient(cfg.OpenSkyClient.ID, cfg.OpenSkyClient.Secret)
-	appService := service.NewService(openskyClient)
+	flightawareClient := client.NewFlightAwareClient(cfg.FlightAware.APIKey)
+	appService := service.NewService(openskyClient, flightawareClient)
 
 	httpServer := server.NewServer(appService, cfg)
 	httpServer.Start()

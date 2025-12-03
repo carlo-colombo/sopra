@@ -1,1 +1,5 @@
 .envrc
+sopra
+*.exe
+*.test
+*.prof

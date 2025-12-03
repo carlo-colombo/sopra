@@ -27,6 +27,8 @@ type Flight struct {
 	Squawk         string  `json:"squawk"`
 	Spi            bool    `json:"spi"`
 	PositionSource int     `json:"position_source"`
+	Origin         string  `json:"origin,omitempty"`      // ICAO airport code
+	Destination    string  `json:"destination,omitempty"` // ICAO airport code
 }
 
 // ToFlights converts the States object to a slice of Flight objects.
@@ -94,6 +96,11 @@ func (s *States) ToFlights() []Flight {
 		flights = append(flights, flight)
 	}
 	return flights
+}
+
+// String provides a string representation of the Flight struct.
+func (f *Flight) String() string {
+	return fmt.Sprintf("Callsign: %s, Origin: %s, Destination: %s", f.Callsign, f.Origin, f.Destination)
 }
 
 func (s *States) String() string {

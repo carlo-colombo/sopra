@@ -12,15 +12,22 @@ type OpenSkyAPIClient interface {
 	GetStatesWithBoundingBox(lamin, lomin, lamax, lomax float64) (*model.States, error)
 }
 
+// FlightAwareAPIClient defines the interface for the FlightAware AeroAPI client.
+type FlightAwareAPIClient interface {
+	GetFlightInfo(icao24 string) (origin, destination string, err error)
+}
+
 // Service is the main service for the application.
 type Service struct {
-	openskyClient OpenSkyAPIClient
+	openskyClient     OpenSkyAPIClient
+	flightawareClient FlightAwareAPIClient
 }
 
 // NewService creates a new Service.
-func NewService(openskyClient OpenSkyAPIClient) *Service {
+func NewService(openskyClient OpenSkyAPIClient, flightawareClient FlightAwareAPIClient) *Service {
 	return &Service{
-		openskyClient: openskyClient,
+		openskyClient:     openskyClient,
+		flightawareClient: flightawareClient,
 	}
 }
 
@@ -34,9 +41,18 @@ func (s *Service) GetFlightsInRadius(lat, lon, radius float64) ([]model.Flight, 
 		return nil, err
 	}
 
-	if states == nil {
-		return []model.Flight{}, nil
+	flights := states.ToFlights()
+
+	for i := range flights {
+		origin, destination, err := s.flightawareClient.GetFlightInfo(flights[i].Icao24)
+		if err != nil {
+			log.Printf("Could not get FlightAware info for ICAO24 %s: %v", flights[i].Icao24, err)
+			// Continue even if FlightAware lookup fails for one flight
+			continue
+		}
+		flights[i].Origin = origin
+		flights[i].Destination = destination
 	}
 
-	return states.ToFlights(), nil
+	return flights, nil
 }

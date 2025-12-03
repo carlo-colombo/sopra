@@ -3,10 +3,10 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"log"
-	"net/http"
 	"github.com/carlo-colombo/sopra/config"
 	"github.com/carlo-colombo/sopra/model"
+	"log"
+	"net/http"
 )
 
 // FlightService defines the interface for the flight service.
