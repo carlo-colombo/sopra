@@ -8,53 +8,41 @@ import (
 
 // Config holds the application's configuration.
 type Config struct {
-	Port int `mapstructure:"PORT"`
+	Port int `mapstructure:"port"`
 
 	OpenSkyClient struct {
 		ID     string `mapstructure:"id"`
 		Secret string `mapstructure:"secret"`
 	} `mapstructure:"opensky_client"`
 	Service struct {
-		Latitude  float64 `mapstructure:"DEFAULT_LATITUDE"`
-		Longitude float64 `mapstructure:"DEFAULT_LONGITUDE"`
-		Radius    float64 `mapstructure:"DEFAULT_RADIUS"` // in kilometers
+		Latitude  float64 `mapstructure:"latitude"`
+		Longitude float64 `mapstructure:"longitude"`
+		Radius    float64 `mapstructure:"radius"`
 	} `mapstructure:"service"`
 }
 
 // LoadConfig loads configuration from file and environment variables.
-func LoadConfig() (*Config, error) {
-	viper.SetConfigName("config") // name of config file (without extension)
-	viper.AddConfigPath(".")      // path to look for the config file in the current directory
+func LoadConfig(path string) (*Config, error) {
+	viper.SetConfigName("config")
+	viper.AddConfigPath(path)
 
+	viper.AutomaticEnv()
 
-	viper.AutomaticEnv() // read in environment variables that match
-
-	// Explicitly bind environment variables for OpenSkyClient
+	// Bind environment variables
+	viper.BindEnv("port", "PORT")
 	viper.BindEnv("opensky_client.id", "OPENSKY_CLIENT_ID")
 	viper.BindEnv("opensky_client.secret", "OPENSKY_CLIENT_SECRET")
-
-	// Explicitly bind environment variables for Service defaults
-	viper.BindEnv("service.default_latitude", "DEFAULT_LATITUDE")
-	viper.BindEnv("service.default_longitude", "DEFAULT_LONGITUDE")
-	viper.BindEnv("service.default_radius", "DEFAULT_RADIUS")
-
-
-
-	// Set default values for new fields
-	viper.SetDefault("PORT", 8080)
-
-	viper.SetDefault("OPENSKY_CLIENT_ID", "")
-	viper.SetDefault("OPENSKY_CLIENT_SECRET", "")
-
-	// Set defaults from .env specific keys for radius
-	viper.SetDefault("DEFAULT_LATITUDE", 47.3769)
-	viper.SetDefault("DEFAULT_LONGITUDE", 8.5417)
-	viper.SetDefault("DEFAULT_RADIUS", 100.0)
+	viper.BindEnv("service.latitude", "DEFAULT_LATITUDE")
+	viper.BindEnv("service.longitude", "DEFAULT_LONGITUDE")
+	viper.BindEnv("service.radius", "DEFAULT_RADIUS")
 
 	// Set default values
-	viper.SetDefault("service.latitude", 47.3769)  // Zurich
-	viper.SetDefault("service.longitude", 8.5417) // Zurich
-	viper.SetDefault("service.radius", 100.0)      // 100km
+	viper.SetDefault("port", 8080)
+	viper.SetDefault("opensky_client.id", "")
+	viper.SetDefault("opensky_client.secret", "")
+	viper.SetDefault("service.latitude", 47.3769)
+	viper.SetDefault("service.longitude", 8.5417)
+	viper.SetDefault("service.radius", 100.0)
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
@@ -90,4 +78,3 @@ Configuration:
 		c.OpenSkyClient.ID, c.OpenSkyClient.Secret,
 		c.Service.Latitude, c.Service.Longitude, c.Service.Radius)
 }
-

@@ -14,6 +14,7 @@ import (
 // OpenSkyClient is a client for the OpenSky Network API.
 type OpenSkyClient struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 // NewOpenSkyClient creates a new OpenSkyClient.
@@ -28,12 +29,13 @@ func NewOpenSkyClient(clientID, clientSecret string) *OpenSkyClient {
 
 	return &OpenSkyClient{
 		httpClient: httpClient,
+		baseURL:    "https://opensky-network.org/api",
 	}
 }
 
 // GetStates retrieves all flight states from the OpenSky Network API.
 func (c *OpenSkyClient) GetStates() (*model.States, error) {
-	resp, err := c.httpClient.Get("https://opensky-network.org/api/states/all")
+	resp, err := c.httpClient.Get(fmt.Sprintf("%s/states/all", c.baseURL))
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +55,7 @@ func (c *OpenSkyClient) GetStates() (*model.States, error) {
 
 // GetStatesWithBoundingBox retrieves flight states within a specified bounding box from the OpenSky Network API.
 func (c *OpenSkyClient) GetStatesWithBoundingBox(lamin, lomin, lamax, lomax float64) (*model.States, error) {
-	url := fmt.Sprintf("https://opensky-network.org/api/states/all?lamin=%f&lomin=%f&lamax=%f&lomax=%f", lamin, lomin, lamax, lomax)
+	url := fmt.Sprintf("%s/states/all?lamin=%f&lomin=%f&lamax=%f&lomax=%f", c.baseURL, lamin, lomin, lamax, lomax)
 	log.Printf("Requesting states from OpenSky API: %s\n", url)
 	resp, err := c.httpClient.Get(url)
 	if err != nil {

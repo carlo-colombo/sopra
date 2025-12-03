@@ -3,18 +3,22 @@ package service
 import (
 	"log"
 
-	"github.com/carlo-colombo/sopra/client"
 	"github.com/carlo-colombo/sopra/haversine"
 	"github.com/carlo-colombo/sopra/model"
 )
 
+// OpenSkyAPIClient defines the interface for the OpenSky API client.
+type OpenSkyAPIClient interface {
+	GetStatesWithBoundingBox(lamin, lomin, lamax, lomax float64) (*model.States, error)
+}
+
 // Service is the main service for the application.
 type Service struct {
-	openskyClient *client.OpenSkyClient
+	openskyClient OpenSkyAPIClient
 }
 
 // NewService creates a new Service.
-func NewService(openskyClient *client.OpenSkyClient) *Service {
+func NewService(openskyClient OpenSkyAPIClient) *Service {
 	return &Service{
 		openskyClient: openskyClient,
 	}
