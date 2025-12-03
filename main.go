@@ -9,12 +9,12 @@ import (
 )
 
 func main() {
-	cfg, err := config.LoadConfig()
+	cfg, err := config.LoadConfig(".")
 	if err != nil {
 		log.Fatalf("Error loading config: %v", err)
 	}
 
-	log.Printf(cfg.String()) // Print the loaded configuration
+	log.Printf("%s", cfg.String()) // Print the loaded configuration
 
 	if cfg.OpenSkyClient.ID == "" || cfg.OpenSkyClient.Secret == "" {
 		log.Fatal("OPENSKY_CLIENT_ID and OPENSKY_CLIENT_SECRET environment variables are required")

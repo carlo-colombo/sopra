@@ -6,17 +6,22 @@ import (
 	"log"
 	"net/http"
 	"github.com/carlo-colombo/sopra/config"
-	"github.com/carlo-colombo/sopra/service"
+	"github.com/carlo-colombo/sopra/model"
 )
+
+// FlightService defines the interface for the flight service.
+type FlightService interface {
+	GetFlightsInRadius(lat, lon, radius float64) ([]model.Flight, error)
+}
 
 // Server holds the HTTP server and its dependencies.
 type Server struct {
-	service *service.Service
+	service FlightService
 	config  *config.Config
 }
 
 // NewServer creates a new Server instance.
-func NewServer(s *service.Service, cfg *config.Config) *Server {
+func NewServer(s FlightService, cfg *config.Config) *Server {
 	return &Server{
 		service: s,
 		config:  cfg,
