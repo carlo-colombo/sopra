@@ -19,7 +19,7 @@ func NewFlightAwareClient(apiKey string) *FlightAwareClient {
 	return &FlightAwareClient{
 		httpClient: &http.Client{Timeout: 10 * time.Second}, // Add a timeout for HTTP requests
 		apiKey:     apiKey,
-		baseURL:    "https://api.flightaware.com/aeroapi",
+		baseURL:    "https://aeroapi.flightaware.com/aeroapi",
 	}
 }
 
