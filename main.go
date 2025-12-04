@@ -39,7 +39,17 @@ func main() {
 	if cfg.Print {
 		flights, err := appService.GetFlightsInRadius(cfg.Service.Latitude, cfg.Service.Longitude, cfg.Service.Radius)
 		if err != nil {
-			log.Fatalf("Error getting flights: %v", err)
+			log.Printf("Error getting flights: %v", err)
+			// Print an empty JSON array of FlightInfo or a JSON error object
+			jsonError, marshalErr := json.MarshalIndent(map[string]interface{}{
+				"error":   fmt.Sprintf("Failed to retrieve flights: %v", err),
+				"flights": []interface{}{},
+			}, "", "  ")
+			if marshalErr != nil {
+				log.Fatalf("Error marshalling error response to JSON: %v", marshalErr)
+			}
+			fmt.Println(string(jsonError))
+			os.Exit(1) // Exit with an error code to indicate failure
 		}
 		jsonFlights, err := json.MarshalIndent(flights, "", "  ")
 		if err != nil {

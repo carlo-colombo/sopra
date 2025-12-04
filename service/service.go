@@ -3,18 +3,17 @@ package service
 import (
 	"log"
 
-	"github.com/carlo-colombo/sopra/haversine"
 	"github.com/carlo-colombo/sopra/model"
 )
 
 // OpenSkyAPIClient defines the interface for the OpenSky API client.
 type OpenSkyAPIClient interface {
-	GetStatesWithBoundingBox(lamin, lomin, lamax, lomax float64) (*model.States, error)
+	GetStatesInRadius(lat, lon, radiusKm float64) ([]model.Flight, error)
 }
 
 // FlightAwareAPIClient defines the interface for the FlightAware AeroAPI client.
 type FlightAwareAPIClient interface {
-	GetFlightInfo(icao24 string) (origin, destination string, err error)
+	GetFlightInfo(ident string) (*model.FlightInfo, error)
 }
 
 // Service is the main service for the application.
@@ -31,28 +30,30 @@ func NewService(openskyClient OpenSkyAPIClient, flightawareClient FlightAwareAPI
 	}
 }
 
-// GetFlightsInRadius returns a list of flights within a given radius from a location.
-func (s *Service) GetFlightsInRadius(lat, lon, radius float64) ([]model.Flight, error) {
+// GetFlightsInRadius returns a list of enriched FlightInfo objects within a given radius from a location.
+func (s *Service) GetFlightsInRadius(lat, lon, radius float64) ([]model.FlightInfo, error) {
 	log.Printf("Request for flights in radius %f from position (%f, %f)\n", radius, lat, lon)
-	bbox := haversine.GetBoundingBox(lat, lon, radius)
 
-	states, err := s.openskyClient.GetStatesWithBoundingBox(bbox.MinLat, bbox.MinLon, bbox.MaxLat, bbox.MaxLon)
+	openskyFlights, err := s.openskyClient.GetStatesInRadius(lat, lon, radius)
 	if err != nil {
 		return nil, err
 	}
 
-	flights := states.ToFlights()
-
-	for i := range flights {
-		origin, destination, err := s.flightawareClient.GetFlightInfo(flights[i].Icao24)
-		if err != nil {
-			log.Printf("Could not get FlightAware info for ICAO24 %s: %v", flights[i].Icao24, err)
-			// Continue even if FlightAware lookup fails for one flight
-			continue
+	var enrichedFlights []model.FlightInfo
+	for _, flight := range openskyFlights {
+		if flight.Callsign == "" {
+			continue // Skip flights without a callsign for FlightAware lookup
 		}
-		flights[i].Origin = origin
-		flights[i].Destination = destination
+
+		flightInfo, err := s.flightawareClient.GetFlightInfo(flight.Callsign)
+		if err != nil {
+			log.Printf("Could not get FlightAware info for callsign %s (ICAO24: %s): %v", flight.Callsign, flight.Icao24, err)
+			continue // Continue even if FlightAware lookup fails for one flight
+		}
+		if flightInfo != nil {
+			enrichedFlights = append(enrichedFlights, *flightInfo)
+		}
 	}
 
-	return flights, nil
+	return enrichedFlights, nil
 }

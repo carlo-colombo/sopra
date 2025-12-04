@@ -11,7 +11,7 @@ import (
 
 // FlightService defines the interface for the flight service.
 type FlightService interface {
-	GetFlightsInRadius(lat, lon, radius float64) ([]model.Flight, error)
+	GetFlightsInRadius(lat, lon, radius float64) ([]model.FlightInfo, error)
 }
 
 // Server holds the HTTP server and its dependencies.

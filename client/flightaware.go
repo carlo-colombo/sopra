@@ -3,8 +3,11 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
+
+	"github.com/carlo-colombo/sopra/model"
 )
 
 // FlightAwareClient is a client for the FlightAware AeroAPI.
@@ -23,29 +26,14 @@ func NewFlightAwareClient(apiKey string) *FlightAwareClient {
 	}
 }
 
-// AeroAPIResponse represents the simplified structure of a FlightAware AeroAPI response for a flight.
-// This is a placeholder and might need adjustment based on actual API response.
-type AeroAPIResponse struct {
-	Flights []struct {
-		Origin struct {
-			AirportCode string `json:"code_icao"`
-		} `json:"origin"`
-		Destination struct {
-			AirportCode string `json:"code_icao"`
-		} `json:"destination"`
-	} `json:"flights"`
-}
-
-// GetFlightInfo retrieves flight information (origin and destination) from FlightAware AeroAPI.
-func (c *FlightAwareClient) GetFlightInfo(icao24 string) (origin, destination string, err error) {
-	// Construct the URL to get flight info by icao24. This is an assumption.
-	// The actual API might require a callsign or a different identifier.
-	// Assuming an endpoint like /flights/{icao24} or similar that returns flight details.
-	url := fmt.Sprintf("%s/aircraft/%s/flights", c.baseURL, icao24)
+// GetFlightInfo retrieves detailed flight information from FlightAware AeroAPI by its ident (callsign).
+func (c *FlightAwareClient) GetFlightInfo(ident string) (*model.FlightInfo, error) {
+	url := fmt.Sprintf("%s/flights/%s", c.baseURL, ident)
+	log.Printf("Requesting flight info from FlightAware API: %s\n", url)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to create request: %w", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Add("x-apikey", c.apiKey)
@@ -53,22 +41,26 @@ func (c *FlightAwareClient) GetFlightInfo(icao24 string) (origin, destination st
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to make request to FlightAware API: %w", err)
+		return nil, fmt.Errorf("failed to make request to FlightAware API: %w", err)
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil // No flight found for the given ident, not an error
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return "", "", fmt.Errorf("FlightAware API returned non-OK status: %s", resp.Status)
+		return nil, fmt.Errorf("FlightAware API returned non-OK status: %s", resp.Status)
 	}
 
-	var aeroAPIResponse AeroAPIResponse
-	if err := json.NewDecoder(resp.Body).Decode(&aeroAPIResponse); err != nil {
-		return "", "", fmt.Errorf("failed to decode FlightAware API response: %w", err)
+	var faResponse model.FlightAwareResponse
+	if err := json.NewDecoder(resp.Body).Decode(&faResponse); err != nil {
+		return nil, fmt.Errorf("failed to decode FlightAware API response: %w", err)
 	}
 
-	if len(aeroAPIResponse.Flights) > 0 {
-		return aeroAPIResponse.Flights[0].Origin.AirportCode, aeroAPIResponse.Flights[0].Destination.AirportCode, nil
+	if len(faResponse.Flights) > 0 {
+		return &faResponse.Flights[0], nil
 	}
 
-	return "", "", fmt.Errorf("no flight information found for icao24: %s", icao24)
+	return nil, nil // No flight info in the response
 }

@@ -41,3 +41,18 @@ func radToDeg(rad float64) float64 {
 func degToRad(deg float64) float64 {
 	return deg * math.Pi / 180
 }
+
+// Distance calculates the shortest path between two coordinates on the surface of a sphere.
+func Distance(lat1, lon1, lat2, lon2 float64) float64 {
+	dLat := degToRad(lat2 - lat1)
+	dLon := degToRad(lon2 - lon1)
+
+	lat1 = degToRad(lat1)
+	lat2 = degToRad(lat2)
+
+	a := math.Sin(dLat/2)*math.Sin(dLat/2) +
+		math.Sin(dLon/2)*math.Sin(dLon/2)*math.Cos(lat1)*math.Cos(lat2)
+	c := 2 * math.Asin(math.Sqrt(a))
+
+	return earthRadiusKm * c
+}

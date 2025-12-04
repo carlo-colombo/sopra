@@ -1,0 +1,169 @@
+package client
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
+	"github.com/carlo-colombo/sopra/model"
+)
+
+func TestNewFlightAwareClient(t *testing.T) {
+	apiKey := "test_api_key"
+	client := NewFlightAwareClient(apiKey)
+
+	if client == nil {
+		t.Fatal("Expected NewFlightAwareClient to return a client, but got nil")
+	}
+	if client.apiKey != apiKey {
+		t.Errorf("Expected API key %s, but got %s", apiKey, client.apiKey)
+	}
+	if client.baseURL != "https://aeroapi.flightaware.com/aeroapi" {
+		t.Errorf("Expected base URL %s, but got %s", "https://aeroapi.flightaware.com/aeroapi", client.baseURL)
+	}
+}
+
+func TestGetFlightInfo_Success(t *testing.T) {
+	expectedIdent := "UAL123"
+	mockResponse := model.FlightAwareResponse{
+		Flights: []model.FlightInfo{
+			{
+				Ident:        expectedIdent,
+				Operator:     "United Airlines",
+				AircraftType: "B738",
+				Origin: model.AirportDetail{
+					AirportCode: "ORD",
+					AirportName: "Chicago O'Hare International Airport",
+				},
+				Destination: model.AirportDetail{
+					AirportCode: "LAX",
+					AirportName: "Los Angeles International Airport",
+				},
+				ScheduledOut: time.Now(),
+				EstimatedOut: time.Now(),
+				ActualOut:    nil,
+				ScheduledOn:  time.Now(),
+				EstimatedOn:  time.Now(),
+				ActualOn:     nil,
+				ScheduledIn:  time.Now(),
+				EstimatedIn:  time.Now(),
+				ActualIn:     nil,
+				Status:       "En Route",
+			},
+		},
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != fmt.Sprintf("/aeroapi/flights/%s", expectedIdent) {
+			t.Errorf("Expected to request '/aeroapi/flights/%s', got '%s'", expectedIdent, r.URL.Path)
+		}
+		if r.Header.Get("x-apikey") != "test_api_key" {
+			t.Errorf("Expected API key header 'test_api_key', got '%s'", r.Header.Get("x-apikey"))
+		}
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(mockResponse)
+	}))
+	defer server.Close()
+
+	client := &FlightAwareClient{
+		httpClient: server.Client(),
+		apiKey:     "test_api_key",
+		baseURL:    server.URL + "/aeroapi", // Adjust base URL for mock server
+	}
+
+	flightInfo, err := client.GetFlightInfo(expectedIdent)
+	if err != nil {
+		t.Fatalf("Expected no error, but got: %v", err)
+	}
+	if flightInfo == nil {
+		t.Fatal("Expected flight info, but got nil")
+	}
+	if flightInfo.Ident != expectedIdent {
+		t.Errorf("Expected ident %s, but got %s", expectedIdent, flightInfo.Ident)
+	}
+	if flightInfo.Origin.AirportCode != mockResponse.Flights[0].Origin.AirportCode {
+		t.Errorf("Expected origin airport code %s, but got %s", mockResponse.Flights[0].Origin.AirportCode, flightInfo.Origin.AirportCode)
+	}
+	if flightInfo.Destination.AirportCode != mockResponse.Flights[0].Destination.AirportCode {
+		t.Errorf("Expected destination airport code %s, but got %s", mockResponse.Flights[0].Destination.AirportCode, flightInfo.Destination.AirportCode)
+	}
+	if flightInfo.Status != "En Route" {
+		t.Errorf("Expected status %s, but got %s", "En Route", flightInfo.Status)
+	}
+}
+
+func TestGetFlightInfo_NotFound(t *testing.T) {
+	expectedIdent := "NONEXISTENT123"
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer server.Close()
+
+	client := &FlightAwareClient{
+		httpClient: server.Client(),
+		apiKey:     "test_api_key",
+		baseURL:    server.URL + "/aeroapi",
+	}
+
+	flightInfo, err := client.GetFlightInfo(expectedIdent)
+	if err != nil {
+		t.Fatalf("Expected no error, but got: %v", err)
+	}
+	if flightInfo != nil {
+		t.Fatalf("Expected no flight info, but got: %+v", flightInfo)
+	}
+}
+
+func TestGetFlightInfo_ServerError(t *testing.T) {
+	expectedIdent := "UAL123"
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer server.Close()
+
+	client := &FlightAwareClient{
+		httpClient: server.Client(),
+		apiKey:     "test_api_key",
+		baseURL:    server.URL + "/aeroapi",
+	}
+
+	flightInfo, err := client.GetFlightInfo(expectedIdent)
+	if err == nil {
+		t.Fatal("Expected an error, but got none")
+	}
+	if flightInfo != nil {
+		t.Fatalf("Expected no flight info, but got: %+v", flightInfo)
+	}
+}
+
+func TestGetFlightInfo_NoFlightsInResponse(t *testing.T) {
+	expectedIdent := "UAL123"
+	mockResponse := model.FlightAwareResponse{
+		Flights: []model.FlightInfo{}, // Empty flights array
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(mockResponse)
+	}))
+	defer server.Close()
+
+	client := &FlightAwareClient{
+		httpClient: server.Client(),
+		apiKey:     "test_api_key",
+		baseURL:    server.URL + "/aeroapi",
+	}
+
+	flightInfo, err := client.GetFlightInfo(expectedIdent)
+	if err != nil {
+		t.Fatalf("Expected no error, but got: %v", err)
+	}
+	if flightInfo != nil {
+		t.Fatalf("Expected no flight info, but got: %+v", flightInfo)
+	}
+}

@@ -11,7 +11,19 @@ import (
 
 func TestLoadConfig_Defaults(t *testing.T) {
 	viper.Reset()
-	cfg, err := LoadConfig(".")
+
+	os.Unsetenv("PORT")
+	os.Unsetenv("OPENSKY_CLIENT_ID")
+	os.Unsetenv("OPENSKY_CLIENT_SECRET")
+	os.Unsetenv("FLIGHTAWARE_API_KEY")
+	os.Unsetenv("DEFAULT_LATITUDE")
+	os.Unsetenv("DEFAULT_LONGITUDE")
+	os.Unsetenv("DEFAULT_RADIUS")
+
+	tmpdir, err := os.MkdirTemp("", "config-test-defaults")
+	assert.NoError(t, err)
+	defer os.RemoveAll(tmpdir)
+	cfg, err := LoadConfig(tmpdir)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, cfg)

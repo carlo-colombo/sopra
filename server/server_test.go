@@ -17,17 +17,17 @@ type MockService struct {
 	mock.Mock
 }
 
-func (m *MockService) GetFlightsInRadius(lat, lon, radius float64) ([]model.Flight, error) {
+func (m *MockService) GetFlightsInRadius(lat, lon, radius float64) ([]model.FlightInfo, error) {
 	args := m.Called(lat, lon, radius)
-	return args.Get(0).([]model.Flight), args.Error(1)
+	return args.Get(0).([]model.FlightInfo), args.Error(1)
 }
 
 func TestGetFlightsHandler(t *testing.T) {
 	// Create a mock service
 	mockService := new(MockService)
-	expectedFlights := []model.Flight{
-		{Icao24: "icao1", Callsign: "flight1"},
-		{Icao24: "icao2", Callsign: "flight2"},
+	expectedFlights := []model.FlightInfo{
+		{Ident: "UAL123", Operator: "United Airlines"},
+		{Ident: "DAL456", Operator: "Delta Airlines"},
 	}
 	mockService.On("GetFlightsInRadius", mock.Anything, mock.Anything, mock.Anything).Return(expectedFlights, nil)
 
@@ -50,7 +50,7 @@ func TestGetFlightsHandler(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rr.Code)
 
 	// Check the response body
-	var actualFlights []model.Flight
+	var actualFlights []model.FlightInfo
 	err = json.Unmarshal(rr.Body.Bytes(), &actualFlights)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedFlights, actualFlights)

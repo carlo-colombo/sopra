@@ -93,6 +93,12 @@ func (s *States) ToFlights() []Flight {
 				flight.PositionSource = int(val)
 			}
 		}
+		if len(state) > 17 {
+			flight.Origin, _ = state[17].(string)
+		}
+		if len(state) > 18 {
+			flight.Destination, _ = state[18].(string)
+		}
 		flights = append(flights, flight)
 	}
 	return flights
