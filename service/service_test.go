@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/carlo-colombo/sopra/database"
+	"github.com/carlo-colombo/sopra/config"
 	"github.com/carlo-colombo/sopra/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -83,7 +84,8 @@ func TestGetFlightsInRadius(t *testing.T) {
 	mockFlightAwareClient.On("GetFlightInfo", "").Return(nil, nil).Maybe()
 
 
-	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db)
+	cfg := &config.Config{} // Dummy config
+	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db, cfg)
 
 	// Act
 	flights, err := service.GetFlightsInRadius(40.7128, -74.0060, 100.0)
@@ -110,7 +112,8 @@ func TestGetFlightsInRadius_OpenSkyError(t *testing.T) {
 
 	mockOpenSkyClient.On("GetStatesInRadius", mock.Anything, mock.Anything, mock.Anything).Return([]model.Flight{}, errors.New("opensky error"))
 
-	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db)
+	cfg := &config.Config{} // Dummy config
+	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db, cfg)
 
 	flights, err := service.GetFlightsInRadius(40.7128, -74.0060, 100.0)
 
@@ -136,7 +139,8 @@ func TestGetFlightsInRadius_FlightAwareError(t *testing.T) {
 	mockOpenSkyClient.On("GetStatesInRadius", mock.Anything, mock.Anything, mock.Anything).Return(openskyFlights, nil)
 	mockFlightAwareClient.On("GetFlightInfo", "UAL123").Return(nil, errors.New("flightaware error"))
 
-	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db)
+	cfg := &config.Config{} // Dummy config
+	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db, cfg)
 
 	flights, err := service.GetFlightsInRadius(40.7128, -74.0060, 100.0)
 
@@ -162,7 +166,8 @@ func TestGetFlightsInRadius_NoCallsign(t *testing.T) {
 	}
 	mockOpenSkyClient.On("GetStatesInRadius", mock.Anything, mock.Anything, mock.Anything).Return(openskyFlights, nil)
 
-	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db)
+	cfg := &config.Config{} // Dummy config
+	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db, cfg)
 
 	flights, err := service.GetFlightsInRadius(40.7128, -74.0060, 100.0)
 
@@ -178,7 +183,8 @@ func TestLogFlights(t *testing.T) {
 	mockOpenSkyClient := new(MockOpenSkyClient)
 	mockFlightAwareClient := new(MockFlightAwareClient)
 	db := newTestDB(t)
-	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db)
+	cfg := &config.Config{} // Dummy config
+	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db, cfg)
 
 	flightsToLog := []model.FlightInfo{
 		{
