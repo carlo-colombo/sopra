@@ -151,6 +151,12 @@ func TestGetFlightInfo_Cache(t *testing.T) {
 		t.Errorf("Expected server to be hit once, but it was hit %d times", serverHitCount)
 	}
 
+	// get last seen time
+	_, lastSeen1, err := cache.Get(expectedIdent)
+	if err != nil {
+		t.Fatalf("Error getting from cache: %v", err)
+	}
+
 	// Second call - should be served from cache
 	flightInfo, err = client.GetFlightInfo(expectedIdent)
 	if err != nil {
@@ -161,6 +167,15 @@ func TestGetFlightInfo_Cache(t *testing.T) {
 	}
 	if serverHitCount != 1 {
 		t.Errorf("Expected server to be hit once, but it was hit %d times", serverHitCount)
+	}
+
+	_, lastSeen2, err := cache.Get(expectedIdent)
+	if err != nil {
+		t.Fatalf("Error getting from cache: %v", err)
+	}
+
+	if !lastSeen1.Equal(lastSeen2) {
+		t.Errorf("Expected last seen time to be the same, but it was updated")
 	}
 }
 

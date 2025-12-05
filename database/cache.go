@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"log"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/carlo-colombo/sopra/model"
@@ -23,9 +24,10 @@ func NewCache(dataSourceName string) (*Cache, error) {
 
 	// Create the cache table if it doesn't exist.
 	// The value is stored as TEXT and will contain the JSON response.
-	_ , err = db.Exec(`CREATE TABLE IF NOT EXISTS cache (
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS cache (
 		key TEXT PRIMARY KEY,
-		value TEXT
+		value TEXT,
+		last_seen DATETIME
 	)`)
 	if err != nil {
 		return nil, err
@@ -35,23 +37,24 @@ func NewCache(dataSourceName string) (*Cache, error) {
 }
 
 // Get retrieves a cached FlightInfo by key.
-func (c *Cache) Get(key string) (*model.FlightInfo, error) {
+func (c *Cache) Get(key string) (*model.FlightInfo, time.Time, error) {
 	var jsonValue string
-	err := c.db.QueryRow("SELECT value FROM cache WHERE key = ?", key).Scan(&jsonValue)
+	var lastSeen time.Time
+	err := c.db.QueryRow("SELECT value, last_seen FROM cache WHERE key = ?", key).Scan(&jsonValue, &lastSeen)
 	if err == sql.ErrNoRows {
-		return nil, nil // Cache miss
+		return nil, time.Time{}, nil // Cache miss
 	}
 	if err != nil {
-		return nil, err
+		return nil, time.Time{}, err
 	}
 
 	var flightInfo model.FlightInfo
 	if err := json.Unmarshal([]byte(jsonValue), &flightInfo); err != nil {
-		return nil, err
+		return nil, time.Time{}, err
 	}
 
-	log.Printf("Cache hit for key: %s\n", key)
-	return &flightInfo, nil
+	log.Printf("Cache hit for key: %s, last seen: %s\n", key, lastSeen)
+	return &flightInfo, lastSeen, nil
 }
 
 // Set stores a FlightInfo in the cache.
@@ -61,7 +64,7 @@ func (c *Cache) Set(key string, flightInfo *model.FlightInfo) error {
 		return err
 	}
 
-	_ , err = c.db.Exec("INSERT OR REPLACE INTO cache (key, value) VALUES (?, ?)", key, string(jsonValue))
+	_, err = c.db.Exec("INSERT OR REPLACE INTO cache (key, value, last_seen) VALUES (?, ?, ?)", key, string(jsonValue), time.Now())
 	log.Printf("Cached value for key: %s\n", key)
 	return err
 }

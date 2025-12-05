@@ -32,7 +32,7 @@ func NewFlightAwareClient(apiKey string, cache *database.Cache) *FlightAwareClie
 // GetFlightInfo retrieves detailed flight information from FlightAware AeroAPI by its ident (callsign).
 func (c *FlightAwareClient) GetFlightInfo(ident string) (*model.FlightInfo, error) {
 	// Try to get the flight info from the cache first.
-	if cachedFlightInfo, err := c.cache.Get(ident); err == nil && cachedFlightInfo != nil {
+	if cachedFlightInfo, _, err := c.cache.Get(ident); err == nil && cachedFlightInfo != nil {
 		return cachedFlightInfo, nil
 	}
 
