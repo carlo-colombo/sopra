@@ -10,21 +10,21 @@ import (
 	"github.com/carlo-colombo/sopra/model"
 )
 
-// Cache handles the database operations for caching.
-type Cache struct {
+// DB handles the database operations for caching.
+type DB struct {
 	db *sql.DB
 }
 
-// NewCache initializes the SQLite database and returns a Cache instance.
-func NewCache(dataSourceName string) (*Cache, error) {
+// NewDB initializes the SQLite database and returns a DB instance.
+func NewDB(dataSourceName string) (*DB, error) {
 	db, err := sql.Open("sqlite3", dataSourceName)
 	if err != nil {
 		return nil, err
 	}
 
-	// Create the cache table if it doesn't exist.
+	// Create the flight_log table if it doesn't exist.
 	// The value is stored as TEXT and will contain the JSON response.
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS cache (
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS flight_log (
 		key TEXT PRIMARY KEY,
 		value TEXT,
 		last_seen DATETIME
@@ -33,14 +33,16 @@ func NewCache(dataSourceName string) (*Cache, error) {
 		return nil, err
 	}
 
-	return &Cache{db: db}, nil
+	return &DB{db: db}, nil
 }
 
-// Get retrieves a cached FlightInfo by key.
-func (c *Cache) Get(key string) (*model.FlightInfo, time.Time, error) {
+
+
+// GetFlight retrieves a cached FlightInfo by key.
+func (c *DB) GetFlight(key string) (*model.FlightInfo, time.Time, error) {
 	var jsonValue string
 	var lastSeen time.Time
-	err := c.db.QueryRow("SELECT value, last_seen FROM cache WHERE key = ?", key).Scan(&jsonValue, &lastSeen)
+	err := c.db.QueryRow("SELECT value, last_seen FROM flight_log WHERE key = ?", key).Scan(&jsonValue, &lastSeen)
 	if err == sql.ErrNoRows {
 		return nil, time.Time{}, nil // Cache miss
 	}
@@ -57,14 +59,14 @@ func (c *Cache) Get(key string) (*model.FlightInfo, time.Time, error) {
 	return &flightInfo, lastSeen, nil
 }
 
-// Set stores a FlightInfo in the cache.
-func (c *Cache) Set(key string, flightInfo *model.FlightInfo) error {
+// LogFlight stores a FlightInfo in the cache.
+func (c *DB) LogFlight(key string, flightInfo *model.FlightInfo) error {
 	jsonValue, err := json.Marshal(flightInfo)
 	if err != nil {
 		return err
 	}
 
-	_, err = c.db.Exec("INSERT OR REPLACE INTO cache (key, value, last_seen) VALUES (?, ?, ?)", key, string(jsonValue), time.Now())
-	log.Printf("Cached value for key: %s\n", key)
+	_, err = c.db.Exec("INSERT OR REPLACE INTO flight_log (key, value, last_seen) VALUES (?, ?, ?)", key, string(jsonValue), time.Now())
+	log.Printf("Logged flight for key: %s\n", key)
 	return err
 }

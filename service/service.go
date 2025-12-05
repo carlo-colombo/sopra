@@ -3,6 +3,7 @@ package service
 import (
 	"log"
 
+	"github.com/carlo-colombo/sopra/database"
 	"github.com/carlo-colombo/sopra/model"
 )
 
@@ -20,13 +21,15 @@ type FlightAwareAPIClient interface {
 type Service struct {
 	openskyClient     OpenSkyAPIClient
 	flightawareClient FlightAwareAPIClient
+	db                *database.DB
 }
 
 // NewService creates a new Service.
-func NewService(openskyClient OpenSkyAPIClient, flightawareClient FlightAwareAPIClient) *Service {
+func NewService(openskyClient OpenSkyAPIClient, flightawareClient FlightAwareAPIClient, db *database.DB) *Service {
 	return &Service{
 		openskyClient:     openskyClient,
 		flightawareClient: flightawareClient,
+		db:                db,
 	}
 }
 
@@ -56,4 +59,14 @@ func (s *Service) GetFlightsInRadius(lat, lon, radius float64) ([]model.FlightIn
 	}
 
 	return enrichedFlights, nil
+}
+
+// LogFlights logs a slice of flights to the database.
+func (s *Service) LogFlights(flights []model.FlightInfo) {
+	for _, flight := range flights {
+		err := s.db.LogFlight(flight.Ident, &flight)
+		if err != nil {
+			log.Printf("Error logging flight %s: %v", flight.Ident, err)
+		}
+	}
 }

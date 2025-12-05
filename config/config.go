@@ -8,8 +8,10 @@ import (
 
 // Config holds the application's configuration.
 type Config struct {
-	Print bool `mapstructure:"print"`
-	Port  int  `mapstructure:"port"`
+	Print    bool `mapstructure:"print"`
+	Watch    bool `mapstructure:"watch"`
+	Interval int  `mapstructure:"interval"`
+	Port     int  `mapstructure:"port"`
 
 	OpenSkyClient struct {
 		ID     string `mapstructure:"id"`
@@ -35,23 +37,25 @@ func LoadConfig(path string) (*Config, error) {
 	// Bind environment variables
 
 	viper.BindPFlag("print", pflag.Lookup("print"))
+	viper.BindPFlag("watch", pflag.Lookup("watch"))
+	viper.BindPFlag("interval", pflag.Lookup("interval"))
 	viper.BindEnv("port", "PORT")
 
 	viper.BindEnv("opensky_client.id", "OPENSKY_CLIENT_ID")
 
 	viper.BindEnv("opensky_client.secret", "OPENSKY_CLIENT_SECRET")
-
 	viper.BindEnv("flightaware.api_key", "FLIGHTAWARE_API_KEY")
-
 	viper.BindEnv("service.latitude", "DEFAULT_LATITUDE")
-
 	viper.BindEnv("service.longitude", "DEFAULT_LONGITUDE")
-
 	viper.BindEnv("service.radius", "DEFAULT_RADIUS")
+	viper.BindEnv("watch", "WATCH")
+	viper.BindEnv("interval", "WATCH_INTERVAL")
 
 	// Set default values
 
 	viper.SetDefault("port", 8080)
+	viper.SetDefault("watch", false)
+	viper.SetDefault("interval", 300)
 
 	viper.SetDefault("opensky_client.id", "")
 
@@ -101,6 +105,8 @@ func (c *Config) String() string {
 
 	Configuration:
 	  Print: %t
+	  Watch: %t
+	  Interval: %ds
 	  Port: %d
 
 	  OpenSky Client:
@@ -123,6 +129,8 @@ func (c *Config) String() string {
 
 	`,
 		c.Print,
+		c.Watch,
+		c.Interval,
 		c.Port,
 
 		c.OpenSkyClient.ID, c.OpenSkyClient.Secret,

@@ -5,10 +5,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/carlo-colombo/sopra/database"
 	"github.com/carlo-colombo/sopra/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+// newTestDB creates a new in-memory database for testing.
+func newTestDB(t *testing.T) *database.DB {
+	t.Helper()
+	db, err := database.NewDB(":memory:")
+	if err != nil {
+		t.Fatalf("failed to create test db: %v", err)
+	}
+	return db
+}
 
 // MockOpenSkyClient is a mock implementation of the OpenSkyAPIClient interface.
 type MockOpenSkyClient struct {
@@ -38,6 +49,7 @@ func TestGetFlightsInRadius(t *testing.T) {
 	// Arrange
 	mockOpenSkyClient := new(MockOpenSkyClient)
 	mockFlightAwareClient := new(MockFlightAwareClient)
+	db := newTestDB(t)
 
 	// Mock OpenSky client to return a list of flights
 	openskyFlights := []model.Flight{
@@ -71,7 +83,7 @@ func TestGetFlightsInRadius(t *testing.T) {
 	mockFlightAwareClient.On("GetFlightInfo", "").Return(nil, nil).Maybe()
 
 
-	service := NewService(mockOpenSkyClient, mockFlightAwareClient)
+	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db)
 
 	// Act
 	flights, err := service.GetFlightsInRadius(40.7128, -74.0060, 100.0)
@@ -94,10 +106,11 @@ func TestGetFlightsInRadius(t *testing.T) {
 func TestGetFlightsInRadius_OpenSkyError(t *testing.T) {
 	mockOpenSkyClient := new(MockOpenSkyClient)
 	mockFlightAwareClient := new(MockFlightAwareClient)
+	db := newTestDB(t)
 
 	mockOpenSkyClient.On("GetStatesInRadius", mock.Anything, mock.Anything, mock.Anything).Return([]model.Flight{}, errors.New("opensky error"))
 
-	service := NewService(mockOpenSkyClient, mockFlightAwareClient)
+	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db)
 
 	flights, err := service.GetFlightsInRadius(40.7128, -74.0060, 100.0)
 
@@ -110,6 +123,7 @@ func TestGetFlightsInRadius_OpenSkyError(t *testing.T) {
 func TestGetFlightsInRadius_FlightAwareError(t *testing.T) {
 	mockOpenSkyClient := new(MockOpenSkyClient)
 	mockFlightAwareClient := new(MockFlightAwareClient)
+	db := newTestDB(t)
 
 	openskyFlights := []model.Flight{
 		{
@@ -122,7 +136,7 @@ func TestGetFlightsInRadius_FlightAwareError(t *testing.T) {
 	mockOpenSkyClient.On("GetStatesInRadius", mock.Anything, mock.Anything, mock.Anything).Return(openskyFlights, nil)
 	mockFlightAwareClient.On("GetFlightInfo", "UAL123").Return(nil, errors.New("flightaware error"))
 
-	service := NewService(mockOpenSkyClient, mockFlightAwareClient)
+	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db)
 
 	flights, err := service.GetFlightsInRadius(40.7128, -74.0060, 100.0)
 
@@ -136,6 +150,7 @@ func TestGetFlightsInRadius_FlightAwareError(t *testing.T) {
 func TestGetFlightsInRadius_NoCallsign(t *testing.T) {
 	mockOpenSkyClient := new(MockOpenSkyClient)
 	mockFlightAwareClient := new(MockFlightAwareClient)
+	db := newTestDB(t)
 
 	openskyFlights := []model.Flight{
 		{
@@ -147,7 +162,7 @@ func TestGetFlightsInRadius_NoCallsign(t *testing.T) {
 	}
 	mockOpenSkyClient.On("GetStatesInRadius", mock.Anything, mock.Anything, mock.Anything).Return(openskyFlights, nil)
 
-	service := NewService(mockOpenSkyClient, mockFlightAwareClient)
+	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db)
 
 	flights, err := service.GetFlightsInRadius(40.7128, -74.0060, 100.0)
 
@@ -156,4 +171,38 @@ func TestGetFlightsInRadius_NoCallsign(t *testing.T) {
 
 	mockOpenSkyClient.AssertExpectations(t)
 	mockFlightAwareClient.AssertNotCalled(t, "GetFlightInfo", mock.Anything)
+}
+
+func TestLogFlights(t *testing.T) {
+	// Arrange
+	mockOpenSkyClient := new(MockOpenSkyClient)
+	mockFlightAwareClient := new(MockFlightAwareClient)
+	db := newTestDB(t)
+	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db)
+
+	flightsToLog := []model.FlightInfo{
+		{
+			Ident:    "UAL123",
+			Operator: "United Airlines",
+			Status:   "En Route",
+		},
+		{
+			Ident:    "DAL456",
+			Operator: "Delta Air Lines",
+			Status:   "Landed",
+		},
+	}
+
+	// Act
+	service.LogFlights(flightsToLog)
+
+	// Assert
+	for _, expectedFlight := range flightsToLog {
+		loggedFlight, _, err := db.GetFlight(expectedFlight.Ident)
+		assert.NoError(t, err)
+		assert.NotNil(t, loggedFlight)
+		assert.Equal(t, expectedFlight.Ident, loggedFlight.Ident)
+		assert.Equal(t, expectedFlight.Operator, loggedFlight.Operator)
+		assert.Equal(t, expectedFlight.Status, loggedFlight.Status)
+	}
 }

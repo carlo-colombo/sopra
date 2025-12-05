@@ -11,10 +11,13 @@ import (
 	"github.com/spf13/pflag"
 	"log"
 	"os"
+	"time"
 )
 
 func main() {
 	pflag.Bool("print", false, "Print the result and logs to stdout")
+	pflag.Bool("watch", false, "Watch for flights and log them")
+	pflag.Int("interval", 300, "The interval to watch for flights in seconds")
 	pflag.Parse()
 
 	cfg, err := config.LoadConfig(".")
@@ -33,15 +36,15 @@ func main() {
 		log.Fatal("FLIGHTAWARE_API_KEY environment variable is required")
 	}
 
-	// Initialize the cache
-	cache, err := database.NewCache("sopra.db")
+	// Initialize the db
+	db, err := database.NewDB("sopra.db")
 	if err != nil {
-		log.Fatalf("Error initializing cache: %v", err)
+		log.Fatalf("Error initializing db: %v", err)
 	}
 
 	openskyClient := client.NewOpenSkyClient(cfg.OpenSkyClient.ID, cfg.OpenSkyClient.Secret)
-	flightawareClient := client.NewFlightAwareClient(cfg.FlightAware.APIKey, cache)
-	appService := service.NewService(openskyClient, flightawareClient)
+	flightawareClient := client.NewFlightAwareClient(cfg.FlightAware.APIKey, db)
+	appService := service.NewService(openskyClient, flightawareClient, db)
 
 	if cfg.Print {
 		flights, err := appService.GetFlightsInRadius(cfg.Service.Latitude, cfg.Service.Longitude, cfg.Service.Radius)
@@ -63,6 +66,22 @@ func main() {
 			log.Fatalf("Error marshalling flights to JSON: %v", err)
 		}
 		fmt.Println(string(jsonFlights))
+		os.Exit(0)
+	}
+
+	if cfg.Watch {
+		ticker := time.NewTicker(time.Duration(cfg.Interval) * time.Second)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			log.Println("Watching for flights...")
+			flights, err := appService.GetFlightsInRadius(cfg.Service.Latitude, cfg.Service.Longitude, cfg.Service.Radius)
+			if err != nil {
+				log.Printf("Error getting flights: %v", err)
+				continue
+			}
+			appService.LogFlights(flights)
+		}
 		os.Exit(0)
 	}
 
