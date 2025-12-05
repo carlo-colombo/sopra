@@ -36,6 +36,7 @@ func NewOpenSkyClient(clientID, clientSecret string) *OpenSkyClient {
 
 // GetStates retrieves all flight states from the OpenSky Network API.
 func (c *OpenSkyClient) GetStates() (*model.States, error) {
+	log.Printf("Requesting all states from OpenSky API: %s/states/all\n", c.baseURL)
 	resp, err := c.httpClient.Get(fmt.Sprintf("%s/states/all", c.baseURL))
 	if err != nil {
 		return nil, err
