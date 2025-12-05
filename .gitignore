@@ -4,3 +4,4 @@ sopra
 *.test
 *.prof
 sopra.log
+sopra.db
