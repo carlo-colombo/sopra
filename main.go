@@ -20,7 +20,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error loading config: %v", err)
 	}
-	config.ConfigureLogger(cfg.Print)
+	config.ConfigureLogger()
 
 	log.Printf("%s", cfg.String()) // Print the loaded configuration
 
