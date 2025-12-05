@@ -11,7 +11,6 @@ import (
 	"github.com/spf13/pflag"
 	"log"
 	"os"
-	"time"
 )
 
 func main() {
@@ -44,7 +43,7 @@ func main() {
 
 	openskyClient := client.NewOpenSkyClient(cfg.OpenSkyClient.ID, cfg.OpenSkyClient.Secret)
 	flightawareClient := client.NewFlightAwareClient(cfg.FlightAware.APIKey, db)
-	appService := service.NewService(openskyClient, flightawareClient, db)
+	appService := service.NewService(openskyClient, flightawareClient, db, cfg) // Pass cfg here
 
 	if cfg.Print {
 		flights, err := appService.GetFlightsInRadius(cfg.Service.Latitude, cfg.Service.Longitude, cfg.Service.Radius)
@@ -70,18 +69,7 @@ func main() {
 	}
 
 	if cfg.Watch {
-		ticker := time.NewTicker(time.Duration(cfg.Interval) * time.Second)
-		defer ticker.Stop()
-
-		for range ticker.C {
-			log.Println("Watching for flights...")
-			flights, err := appService.GetFlightsInRadius(cfg.Service.Latitude, cfg.Service.Longitude, cfg.Service.Radius)
-			if err != nil {
-				log.Printf("Error getting flights: %v", err)
-				continue
-			}
-			appService.LogFlights(flights)
-		}
+		appService.RunWatchMode(cfg.Interval)
 		os.Exit(0)
 	}
 

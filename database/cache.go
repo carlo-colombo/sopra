@@ -36,6 +36,11 @@ func NewDB(dataSourceName string) (*DB, error) {
 	return &DB{db: db}, nil
 }
 
+// Close closes the underlying database connection.
+func (c *DB) Close() error {
+	return c.db.Close()
+}
+
 
 
 // GetFlight retrieves a cached FlightInfo by key.
