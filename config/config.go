@@ -12,6 +12,7 @@ type Config struct {
 	Watch    bool `mapstructure:"watch"`
 	Interval int  `mapstructure:"interval"`
 	Port     int  `mapstructure:"port"`
+	DBPath   string `mapstructure:"db_path"`
 
 	OpenSkyClient struct {
 		ID     string `mapstructure:"id"`
@@ -50,12 +51,14 @@ func LoadConfig(path string) (*Config, error) {
 	viper.BindEnv("service.radius", "DEFAULT_RADIUS")
 	viper.BindEnv("watch", "WATCH")
 	viper.BindEnv("interval", "WATCH_INTERVAL")
+	viper.BindEnv("db_path", "DB_PATH")
 
 	// Set default values
 
 	viper.SetDefault("port", 8080)
 	viper.SetDefault("watch", false)
 	viper.SetDefault("interval", 300)
+	viper.SetDefault("db_path", "sopra.db")
 
 	viper.SetDefault("opensky_client.id", "")
 
@@ -108,6 +111,7 @@ func (c *Config) String() string {
 	  Watch: %t
 	  Interval: %ds
 	  Port: %d
+	  DB Path: %s
 
 	  OpenSky Client:
 
@@ -132,6 +136,7 @@ func (c *Config) String() string {
 		c.Watch,
 		c.Interval,
 		c.Port,
+		c.DBPath,
 
 		c.OpenSkyClient.ID, c.OpenSkyClient.Secret,
 

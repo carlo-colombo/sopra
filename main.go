@@ -36,7 +36,7 @@ func main() {
 	}
 
 	// Initialize the db
-	db, err := database.NewDB("sopra.db")
+	db, err := database.NewDB(cfg.DBPath)
 	if err != nil {
 		log.Fatalf("Error initializing db: %v", err)
 	}
