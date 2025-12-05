@@ -44,7 +44,7 @@ type FlightInfo struct {
 	GateIn         string      `json:"gate_in"`
 	TerminalOut    string      `json:"terminal_out"`
 	TerminalIn     string      `json:"terminal_in"`
-	Codeshares     []Codeshare `json:"codeshares"`
+	Codeshares     []string `json:"codeshares"`
 }
 
 // AirportDetail represents detailed information about an airport.
@@ -55,11 +55,4 @@ type AirportDetail struct {
 	State       string `json:"state"`
 	Country     string `json:"country"`
 	Timezone    string `json:"timezone"`
-}
-
-// Codeshare represents information about a codeshare flight.
-type Codeshare struct {
-	Ident        string `json:"ident"`
-	OperatorICAO string `json:"operator_icao"`
-	Operator     string `json:"operator"`
 }
