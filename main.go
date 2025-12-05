@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/carlo-colombo/sopra/client"
 	"github.com/carlo-colombo/sopra/config"
+	"github.com/carlo-colombo/sopra/database"
 	"github.com/carlo-colombo/sopra/server"
 	"github.com/carlo-colombo/sopra/service"
 	"github.com/spf13/pflag"
@@ -32,8 +33,14 @@ func main() {
 		log.Fatal("FLIGHTAWARE_API_KEY environment variable is required")
 	}
 
+	// Initialize the cache
+	cache, err := database.NewCache("sopra.db")
+	if err != nil {
+		log.Fatalf("Error initializing cache: %v", err)
+	}
+
 	openskyClient := client.NewOpenSkyClient(cfg.OpenSkyClient.ID, cfg.OpenSkyClient.Secret)
-	flightawareClient := client.NewFlightAwareClient(cfg.FlightAware.APIKey)
+	flightawareClient := client.NewFlightAwareClient(cfg.FlightAware.APIKey, cache)
 	appService := service.NewService(openskyClient, flightawareClient)
 
 	if cfg.Print {

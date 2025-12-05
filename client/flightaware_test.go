@@ -8,12 +8,24 @@ import (
 	"testing"
 	"time"
 
+	"github.com/carlo-colombo/sopra/database"
 	"github.com/carlo-colombo/sopra/model"
 )
 
+// newTestCache creates a new in-memory cache for testing.
+func newTestCache(t *testing.T) *database.Cache {
+	t.Helper()
+	cache, err := database.NewCache(":memory:")
+	if err != nil {
+		t.Fatalf("failed to create test cache: %v", err)
+	}
+	return cache
+}
+
 func TestNewFlightAwareClient(t *testing.T) {
 	apiKey := "test_api_key"
-	client := NewFlightAwareClient(apiKey)
+	cache := newTestCache(t)
+	client := NewFlightAwareClient(apiKey, cache)
 
 	if client == nil {
 		t.Fatal("Expected NewFlightAwareClient to return a client, but got nil")
@@ -23,6 +35,9 @@ func TestNewFlightAwareClient(t *testing.T) {
 	}
 	if client.baseURL != "https://aeroapi.flightaware.com/aeroapi" {
 		t.Errorf("Expected base URL %s, but got %s", "https://aeroapi.flightaware.com/aeroapi", client.baseURL)
+	}
+	if client.cache == nil {
+		t.Error("Expected cache to be initialized, but it was nil")
 	}
 }
 
@@ -68,10 +83,12 @@ func TestGetFlightInfo_Success(t *testing.T) {
 	}))
 	defer server.Close()
 
+	cache := newTestCache(t)
 	client := &FlightAwareClient{
 		httpClient: server.Client(),
 		apiKey:     "test_api_key",
 		baseURL:    server.URL + "/aeroapi", // Adjust base URL for mock server
+		cache:      cache,
 	}
 
 	flightInfo, err := client.GetFlightInfo(expectedIdent)
@@ -95,6 +112,58 @@ func TestGetFlightInfo_Success(t *testing.T) {
 	}
 }
 
+func TestGetFlightInfo_Cache(t *testing.T) {
+	expectedIdent := "UAL123"
+	mockResponse := model.FlightAwareResponse{
+		Flights: []model.FlightInfo{
+			{
+				Ident:    expectedIdent,
+				Operator: "United Airlines",
+			},
+		},
+	}
+
+	serverHitCount := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		serverHitCount++
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(mockResponse)
+	}))
+	defer server.Close()
+
+	cache := newTestCache(t)
+	client := &FlightAwareClient{
+		httpClient: server.Client(),
+		apiKey:     "test_api_key",
+		baseURL:    server.URL + "/aeroapi",
+		cache:      cache,
+	}
+
+	// First call - should hit the server
+	flightInfo, err := client.GetFlightInfo(expectedIdent)
+	if err != nil {
+		t.Fatalf("Expected no error, but got: %v", err)
+	}
+	if flightInfo == nil {
+		t.Fatal("Expected flight info, but got nil")
+	}
+	if serverHitCount != 1 {
+		t.Errorf("Expected server to be hit once, but it was hit %d times", serverHitCount)
+	}
+
+	// Second call - should be served from cache
+	flightInfo, err = client.GetFlightInfo(expectedIdent)
+	if err != nil {
+		t.Fatalf("Expected no error, but got: %v", err)
+	}
+	if flightInfo == nil {
+		t.Fatal("Expected flight info, but got nil")
+	}
+	if serverHitCount != 1 {
+		t.Errorf("Expected server to be hit once, but it was hit %d times", serverHitCount)
+	}
+}
+
 func TestGetFlightInfo_NotFound(t *testing.T) {
 	expectedIdent := "NONEXISTENT123"
 
@@ -103,10 +172,12 @@ func TestGetFlightInfo_NotFound(t *testing.T) {
 	}))
 	defer server.Close()
 
+	cache := newTestCache(t)
 	client := &FlightAwareClient{
 		httpClient: server.Client(),
 		apiKey:     "test_api_key",
 		baseURL:    server.URL + "/aeroapi",
+		cache:      cache,
 	}
 
 	flightInfo, err := client.GetFlightInfo(expectedIdent)
@@ -126,10 +197,12 @@ func TestGetFlightInfo_ServerError(t *testing.T) {
 	}))
 	defer server.Close()
 
+	cache := newTestCache(t)
 	client := &FlightAwareClient{
 		httpClient: server.Client(),
 		apiKey:     "test_api_key",
 		baseURL:    server.URL + "/aeroapi",
+		cache:      cache,
 	}
 
 	flightInfo, err := client.GetFlightInfo(expectedIdent)
@@ -153,10 +226,12 @@ func TestGetFlightInfo_NoFlightsInResponse(t *testing.T) {
 	}))
 	defer server.Close()
 
+	cache := newTestCache(t)
 	client := &FlightAwareClient{
 		httpClient: server.Client(),
 		apiKey:     "test_api_key",
 		baseURL:    server.URL + "/aeroapi",
+		cache:      cache,
 	}
 
 	flightInfo, err := client.GetFlightInfo(expectedIdent)

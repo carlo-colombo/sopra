@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/carlo-colombo/sopra/database"
 	"github.com/carlo-colombo/sopra/model"
 )
 
@@ -15,19 +16,26 @@ type FlightAwareClient struct {
 	httpClient *http.Client
 	apiKey     string
 	baseURL    string
+	cache      *database.Cache
 }
 
 // NewFlightAwareClient creates a new FlightAwareClient.
-func NewFlightAwareClient(apiKey string) *FlightAwareClient {
+func NewFlightAwareClient(apiKey string, cache *database.Cache) *FlightAwareClient {
 	return &FlightAwareClient{
 		httpClient: &http.Client{Timeout: 10 * time.Second}, // Add a timeout for HTTP requests
 		apiKey:     apiKey,
 		baseURL:    "https://aeroapi.flightaware.com/aeroapi",
+		cache:      cache,
 	}
 }
 
 // GetFlightInfo retrieves detailed flight information from FlightAware AeroAPI by its ident (callsign).
 func (c *FlightAwareClient) GetFlightInfo(ident string) (*model.FlightInfo, error) {
+	// Try to get the flight info from the cache first.
+	if cachedFlightInfo, err := c.cache.Get(ident); err == nil && cachedFlightInfo != nil {
+		return cachedFlightInfo, nil
+	}
+
 	url := fmt.Sprintf("%s/flights/%s", c.baseURL, ident)
 	log.Printf("Requesting flight info from FlightAware API: %s\n", url)
 
@@ -59,7 +67,12 @@ func (c *FlightAwareClient) GetFlightInfo(ident string) (*model.FlightInfo, erro
 	}
 
 	if len(faResponse.Flights) > 0 {
-		return &faResponse.Flights[0], nil
+		flightInfo := &faResponse.Flights[0]
+		// Cache the result
+		if err := c.cache.Set(ident, flightInfo); err != nil {
+			log.Printf("Failed to cache flight info for ident %s: %v", ident, err)
+		}
+		return flightInfo, nil
 	}
 
 	return nil, nil // No flight info in the response
