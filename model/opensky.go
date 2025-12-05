@@ -1,6 +1,9 @@
 package model
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // States represents the response from the OpenSky Network API
 type States struct {
@@ -40,7 +43,9 @@ func (s *States) ToFlights() []Flight {
 			flight.Icao24, _ = state[0].(string)
 		}
 		if len(state) > 1 {
-			flight.Callsign, _ = state[1].(string)
+			if callsign, ok := state[1].(string); ok {
+				flight.Callsign = strings.TrimSpace(callsign)
+			}
 		}
 		if len(state) > 2 {
 			flight.OriginCountry, _ = state[2].(string)

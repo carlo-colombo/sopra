@@ -114,3 +114,36 @@ func TestGetStatesInRadius(t *testing.T) {
 		t.Errorf("Expected flight with callsign CALL1, but got %s", flights[0].Callsign)
 	}
 }
+
+func TestCallsignTrimming(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		states := model.States{
+			Time: 1,
+			States: [][]interface{}{
+				{"icao24_trim", "  SPACEYCALL  ", "country_trim", 1.0, 1.0, 0.1, 0.1, 1.0, false, 1.0, 1.0, 1.0, nil, 1.0, nil, false, 0, "", ""},
+			},
+		}
+		json.NewEncoder(w).Encode(states)
+	}))
+	defer server.Close()
+
+	client := &OpenSkyClient{
+		httpClient: server.Client(),
+		baseURL:    server.URL,
+	}
+
+	states, err := client.GetStates()
+	if err != nil {
+		t.Fatalf("Expected no error, but got %v", err)
+	}
+
+	flights := states.ToFlights()
+	if len(flights) != 1 {
+		t.Fatalf("Expected 1 flight, but got %d", len(flights))
+	}
+
+	expectedCallsign := "SPACEYCALL"
+	if flights[0].Callsign != expectedCallsign {
+		t.Errorf("Expected trimmed callsign '%s', but got '%s'", expectedCallsign, flights[0].Callsign)
+	}
+}
