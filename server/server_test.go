@@ -33,7 +33,7 @@ func TestGetFlightsHandler(t *testing.T) {
 
 	// Create a new server with the mock service
 	cfg := &config.Config{}
-	server := NewServer(mockService, cfg)
+	server := NewServer(mockService, cfg, nil)
 
 	// Create a new HTTP request
 	req, err := http.NewRequest("GET", "/flights", nil)

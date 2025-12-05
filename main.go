@@ -69,10 +69,9 @@ func main() {
 	}
 
 	if cfg.Watch {
-		appService.RunWatchMode(cfg.Interval)
-		os.Exit(0)
+		go appService.RunWatchMode(cfg.Interval)
 	}
 
-	httpServer := server.NewServer(appService, cfg)
+	httpServer := server.NewServer(appService, cfg, db)
 	httpServer.Start()
 }

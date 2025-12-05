@@ -7,6 +7,8 @@ import (
 	"github.com/carlo-colombo/sopra/model"
 	"log"
 	"net/http"
+
+	"github.com/carlo-colombo/sopra/database"
 )
 
 // FlightService defines the interface for the flight service.
@@ -18,24 +20,61 @@ type FlightService interface {
 type Server struct {
 	service FlightService
 	config  *config.Config
+	db      *database.DB
 }
 
 // NewServer creates a new Server instance.
-func NewServer(s FlightService, cfg *config.Config) *Server {
+func NewServer(s FlightService, cfg *config.Config, db *database.DB) *Server {
 	return &Server{
 		service: s,
 		config:  cfg,
+		db:      db,
 	}
 }
 
 // Start starts the HTTP server.
 func (s *Server) Start() {
 	http.HandleFunc("/flights", s.getFlightsHandler)
+	http.HandleFunc("/last-flight", s.getLastFlightHandler)
 
 	port := fmt.Sprintf(":%d", s.config.Port)
 	log.Printf("Server starting on port %s", port)
 	if err := http.ListenAndServe(port, nil); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
+	}
+}
+
+func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
+	flight, err := s.db.GetLatestFlight()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if flight == nil {
+		http.Error(w, "No flight data available", http.StatusNotFound)
+		return
+	}
+
+	response := struct {
+		Flight       string `json:"flight"`
+		Operator     string `json:"operator"`
+		DestinationCity string `json:"destination_city"`
+		DestinationCode string `json:"destination_code"`
+		SourceCity   string `json:"source_city"`
+		SourceCode   string `json:"source_code"`
+	}{
+		Flight:       flight.Ident,
+		Operator:     flight.Operator,
+		DestinationCity: flight.Destination.City,
+		DestinationCode: flight.Destination.AirportCode,
+		SourceCity:   flight.Origin.City,
+		SourceCode:   flight.Origin.AirportCode,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }
 
