@@ -37,6 +37,7 @@ func NewServer(s FlightService, cfg *config.Config, db *database.DB) *Server {
 func (s *Server) Start() {
 	http.HandleFunc("/flights", s.getFlightsHandler)
 	http.HandleFunc("/last-flight", s.getLastFlightHandler)
+	http.HandleFunc("/all-flights", s.getAllFlightsHandler)
 
 	port := fmt.Sprintf(":%d", s.config.Port)
 	log.Printf("Server starting on port %s", port)
@@ -78,6 +79,50 @@ func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *Server) getAllFlightsHandler(w http.ResponseWriter, r *http.Request) {
+	flights, lastSeens, err := s.db.GetAllFlights()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if len(flights) == 0 {
+		http.Error(w, "No flight data available", http.StatusNotFound)
+		return
+	}
+
+	type FlightResponse struct {
+		Flight          string    `json:"flight"`
+		Operator        string    `json:"operator"`
+		DestinationCity string    `json:"destination_city"`
+		DestinationCode string    `json:"destination_code"`
+		SourceCity      string    `json:"source_city"`
+		SourceCode      string    `json:"source_code"`
+		LastTimeSeen    time.Time `json:"last_time_seen"`
+		AirplaneModel   string    `json:"airplane_model"`
+	}
+
+	var responses []FlightResponse
+	for i, flight := range flights {
+		response := FlightResponse{
+			Flight:          flight.Ident,
+			Operator:        flight.Operator,
+			DestinationCity: flight.Destination.City,
+			DestinationCode: flight.Destination.AirportCode,
+			SourceCity:      flight.Origin.City,
+			SourceCode:      flight.Origin.AirportCode,
+			LastTimeSeen:    lastSeens[i],
+			AirplaneModel:   flight.AircraftType,
+		}
+		responses = append(responses, response)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(responses); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

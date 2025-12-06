@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/carlo-colombo/sopra/config"
+	"github.com/carlo-colombo/sopra/database"
 	"github.com/carlo-colombo/sopra/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -57,4 +58,67 @@ func TestGetFlightsHandler(t *testing.T) {
 
 	// Assert that the mock was called
 	mockService.AssertExpectations(t)
+}
+
+func TestGetAllFlightsHandler(t *testing.T) {
+	// Create a new in-memory database for testing
+	db, err := database.NewDB(":memory:")
+	assert.NoError(t, err)
+	defer db.Close()
+
+	// Log some dummy flight data
+	flight1 := &model.FlightInfo{
+		Ident:    "FL001",
+		Operator: "TestAir",
+		Origin: model.AirportDetail{
+			City:        "Testville",
+			AirportCode: "TST",
+		},
+		Destination: model.AirportDetail{
+			City:        "Testburg",
+			AirportCode: "TSB",
+		},
+		AircraftType: "B737",
+	}
+	flight2 := &model.FlightInfo{
+		Ident:    "FL002",
+		Operator: "TestAir",
+		Origin: model.AirportDetail{
+			City:        "Testburg",
+			AirportCode: "TSB",
+		},
+		Destination: model.AirportDetail{
+			City:        "Testville",
+			AirportCode: "TST",
+		},
+		AircraftType: "A320",
+	}
+	db.LogFlight("FL001", flight1)
+	db.LogFlight("FL002", flight2)
+
+	// Create a new server with the test database
+	cfg := &config.Config{}
+	server := NewServer(nil, cfg, db)
+
+	// Create a new HTTP request
+	req, err := http.NewRequest("GET", "/all-flights", nil)
+	assert.NoError(t, err)
+
+	// Create a ResponseRecorder to record the response
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(server.getAllFlightsHandler)
+
+	// Serve the HTTP request
+	handler.ServeHTTP(rr, req)
+
+	// Check the status code
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	// Check the response body
+	var actualFlights []map[string]interface{}
+	err = json.Unmarshal(rr.Body.Bytes(), &actualFlights)
+	assert.NoError(t, err)
+	assert.Len(t, actualFlights, 2)
+	assert.Equal(t, "FL002", actualFlights[0]["flight"])
+	assert.Equal(t, "FL001", actualFlights[1]["flight"])
 }
