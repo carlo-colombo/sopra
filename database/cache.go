@@ -74,6 +74,39 @@ func (c *DB) GetFlight(key string) (*model.FlightInfo, time.Time, error) {
 	return &flightInfo, lastSeen, nil
 }
 
+// GetAllFlights retrieves all the logged FlightInfo.
+func (c *DB) GetAllFlights() ([]*model.FlightInfo, []time.Time, error) {
+	rows, err := c.db.Query("SELECT value, last_seen FROM flight_log ORDER BY last_seen DESC")
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close()
+
+	var flights []*model.FlightInfo
+	var lastSeens []time.Time
+
+	for rows.Next() {
+		var jsonValue string
+		var lastSeen time.Time
+		if err := rows.Scan(&jsonValue, &lastSeen); err != nil {
+			return nil, nil, err
+		}
+
+		var flightInfo model.FlightInfo
+		if err := json.Unmarshal([]byte(jsonValue), &flightInfo); err != nil {
+			return nil, nil, err
+		}
+		flights = append(flights, &flightInfo)
+		lastSeens = append(lastSeens, lastSeen)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, nil, err
+	}
+
+	return flights, lastSeens, nil
+}
+
 // LogFlight stores a FlightInfo in the cache.
 func (c *DB) LogFlight(key string, flightInfo *model.FlightInfo) error {
 	jsonValue, err := json.Marshal(flightInfo)
