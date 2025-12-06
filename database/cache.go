@@ -8,9 +8,10 @@ import (
 	"time"
 
 	"github.com/carlo-colombo/sopra/model"
+	"github.com/carlo-colombo/sopra/migrations"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/sqlite3"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -20,11 +21,12 @@ type DB struct {
 }
 
 // runMigrations applies the database migrations.
-func runMigrations(dataSourceName string, migrationsPath string) error {
-	m, err := migrate.New(
-		"file://"+migrationsPath,
-		"sqlite3://"+dataSourceName,
-	)
+func runMigrations(dataSourceName string) error {
+	d, err := iofs.New(migrations.Migrations, ".")
+	if err != nil {
+		return err
+	}
+	m, err := migrate.NewWithSourceInstance("iofs", d, "sqlite3://"+dataSourceName)
 	if err != nil {
 		return err
 	}
@@ -35,8 +37,8 @@ func runMigrations(dataSourceName string, migrationsPath string) error {
 }
 
 // NewDB initializes the SQLite database and returns a DB instance.
-func NewDB(dataSourceName string, migrationsPath string) (*DB, error) {
-	if err := runMigrations(dataSourceName, migrationsPath); err != nil {
+func NewDB(dataSourceName string) (*DB, error) {
+	if err := runMigrations(dataSourceName); err != nil {
 		return nil, err
 	}
 

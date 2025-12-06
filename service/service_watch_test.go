@@ -68,7 +68,7 @@ func TestService_RunWatchMode(t *testing.T) {
 
 	// 3. Create a temporary database for testing
 	tempDBPath := "test_sopra.db"
-	db, err := database.NewDB(tempDBPath, "../migrations")
+	db, err := database.NewDB(tempDBPath)
 	if err != nil {
 		t.Fatalf("Failed to create temporary database: %v", err)
 	}

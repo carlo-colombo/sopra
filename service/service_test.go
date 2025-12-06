@@ -19,7 +19,7 @@ func newTestDB(t *testing.T) *database.DB {
 	t.Helper()
 	dbName := fmt.Sprintf("%s.db", t.Name())
 	os.Remove(dbName) // Clean up before test
-	db, err := database.NewDB(dbName, "../migrations")
+	db, err := database.NewDB(dbName)
 	if err != nil {
 		t.Fatalf("failed to create test db: %v", err)
 	}
