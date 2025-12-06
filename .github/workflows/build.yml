@@ -23,8 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Set up Pack
+        uses: buildpacks/github-actions/setup-pack@v5
       - name: build
-        uses: buildpacks/pack-action@v0.8.1
-        with:
-          builder: gcr.io/buildpacks/builder:v1
-          image: sopra-server
+        run: pack build sopra-server --builder gcr.io/buildpacks/builder:v1
