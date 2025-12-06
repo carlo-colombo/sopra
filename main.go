@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/pflag"
 	"log"
 	"os"
+	"time"
 )
 
 func main() {
@@ -39,6 +40,24 @@ func main() {
 	db, err := database.NewDB(cfg.DBPath)
 	if err != nil {
 		log.Fatalf("Error initializing db: %v", err)
+	}
+
+	// Log database information at startup
+	flightCount, err := db.GetFlightCount()
+	if err != nil {
+		log.Printf("Error getting flight count from DB: %v", err)
+	} else {
+		log.Printf("Database initialized. Total flights in DB: %d", flightCount)
+	}
+
+	latestFlight, lastSeen, err := db.GetLatestFlight()
+	if err != nil {
+		log.Printf("Error getting latest flight from DB: %v", err)
+	} else if latestFlight != nil {
+		log.Printf("Last flight recorded: Callsign=%s, Origin=%s, Latitude=%.2f, Longitude=%.2f, LastSeen=%s",
+			latestFlight.Ident, latestFlight.Origin.Country, latestFlight.Latitude, latestFlight.Longitude, lastSeen.Format(time.RFC3339))
+	} else {
+		log.Println("No flights recorded in the database yet.")
 	}
 
 	openskyClient := client.NewOpenSkyClient(cfg.OpenSkyClient.ID, cfg.OpenSkyClient.Secret)

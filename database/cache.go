@@ -41,6 +41,16 @@ func (c *DB) Close() error {
 	return c.db.Close()
 }
 
+// GetFlightCount returns the total number of flights in the cache.
+func (c *DB) GetFlightCount() (int, error) {
+	var count int
+	err := c.db.QueryRow("SELECT COUNT(*) FROM flight_log").Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 
 
 // GetFlight retrieves a cached FlightInfo by key.
