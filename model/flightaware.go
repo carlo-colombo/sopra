@@ -9,6 +9,7 @@ type FlightAwareResponse struct {
 
 // FlightInfo represents detailed information about a flight from FlightAware.
 type FlightInfo struct {
+	IdentificationCount int         `json:"identification_count"`
 	Ident          string      `json:"ident"`
 	FaFlightID     string      `json:"fa_flight_id"`
 	Operator       string      `json:"operator"`

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -15,10 +16,16 @@ import (
 // newTestDB creates a new in-memory database for testing.
 func newTestDB(t *testing.T) *database.DB {
 	t.Helper()
-	db, err := database.NewDB(":memory:")
+	dbName := fmt.Sprintf("%s.db", t.Name())
+	os.Remove(dbName) // Clean up before test
+	db, err := database.NewDB(dbName, "../migrations")
 	if err != nil {
 		t.Fatalf("failed to create test db: %v", err)
 	}
+	t.Cleanup(func() {
+		db.Close()
+		os.Remove(dbName)
+	})
 	return db
 }
 

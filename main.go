@@ -37,7 +37,7 @@ func main() {
 	}
 
 	// Initialize the db
-	db, err := database.NewDB(cfg.DBPath)
+	db, err := database.NewDB(cfg.DBPath, "migrations")
 	if err != nil {
 		log.Fatalf("Error initializing db: %v", err)
 	}
