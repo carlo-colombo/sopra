@@ -1,0 +1,10 @@
+[_]
+schema-version = "0.2"
+id = "sopra"
+name = "Sopra"
+version = "1.0.0"
+
+[io.buildpacks]
+exclude = [
+    "/.git"
+]
