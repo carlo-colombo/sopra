@@ -2,8 +2,10 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/carlo-colombo/sopra/config"
@@ -21,6 +23,21 @@ type MockService struct {
 func (m *MockService) GetFlightsInRadius(lat, lon, radius float64) ([]model.FlightInfo, error) {
 	args := m.Called(lat, lon, radius)
 	return args.Get(0).([]model.FlightInfo), args.Error(1)
+}
+
+func newTestDB(t *testing.T) *database.DB {
+	t.Helper()
+	dbName := fmt.Sprintf("%s.db", t.Name())
+	os.Remove(dbName) // Clean up before test
+	db, err := database.NewDB(dbName, "../migrations")
+	if err != nil {
+		t.Fatalf("failed to create test db: %v", err)
+	}
+	t.Cleanup(func() {
+		db.Close()
+		os.Remove(dbName)
+	})
+	return db
 }
 
 func TestGetFlightsHandler(t *testing.T) {
@@ -62,9 +79,7 @@ func TestGetFlightsHandler(t *testing.T) {
 
 func TestGetAllFlightsHandler(t *testing.T) {
 	// Create a new in-memory database for testing
-	db, err := database.NewDB(":memory:")
-	assert.NoError(t, err)
-	defer db.Close()
+	db := newTestDB(t)
 
 	// Log some dummy flight data
 	flight1 := &model.FlightInfo{

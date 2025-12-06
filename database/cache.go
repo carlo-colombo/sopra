@@ -3,11 +3,15 @@ package database
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"log"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/carlo-colombo/sopra/model"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/sqlite3"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // DB handles the database operations for caching.
@@ -15,20 +19,28 @@ type DB struct {
 	db *sql.DB
 }
 
-// NewDB initializes the SQLite database and returns a DB instance.
-func NewDB(dataSourceName string) (*DB, error) {
-	db, err := sql.Open("sqlite3", dataSourceName)
+// runMigrations applies the database migrations.
+func runMigrations(dataSourceName string, migrationsPath string) error {
+	m, err := migrate.New(
+		"file://"+migrationsPath,
+		"sqlite3://"+dataSourceName,
+	)
 	if err != nil {
+		return err
+	}
+	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		return err
+	}
+	return nil
+}
+
+// NewDB initializes the SQLite database and returns a DB instance.
+func NewDB(dataSourceName string, migrationsPath string) (*DB, error) {
+	if err := runMigrations(dataSourceName, migrationsPath); err != nil {
 		return nil, err
 	}
 
-	// Create the flight_log table if it doesn't exist.
-	// The value is stored as TEXT and will contain the JSON response.
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS flight_log (
-		key TEXT PRIMARY KEY,
-		value TEXT,
-		last_seen DATETIME
-	)`)
+	db, err := sql.Open("sqlite3", dataSourceName)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +69,8 @@ func (c *DB) GetFlightCount() (int, error) {
 func (c *DB) GetFlight(key string) (*model.FlightInfo, time.Time, error) {
 	var jsonValue string
 	var lastSeen time.Time
-	err := c.db.QueryRow("SELECT value, last_seen FROM flight_log WHERE key = ?", key).Scan(&jsonValue, &lastSeen)
+	var identificationCount int
+	err := c.db.QueryRow("SELECT value, last_seen, identification_count FROM flight_log WHERE key = ?", key).Scan(&jsonValue, &lastSeen, &identificationCount)
 	if err == sql.ErrNoRows {
 		return nil, time.Time{}, nil // Cache miss
 	}
@@ -69,6 +82,7 @@ func (c *DB) GetFlight(key string) (*model.FlightInfo, time.Time, error) {
 	if err := json.Unmarshal([]byte(jsonValue), &flightInfo); err != nil {
 		return nil, time.Time{}, err
 	}
+	flightInfo.IdentificationCount = identificationCount
 
 	log.Printf("Cache hit for key: %s, last seen: %s\n", key, lastSeen)
 	return &flightInfo, lastSeen, nil
@@ -76,7 +90,7 @@ func (c *DB) GetFlight(key string) (*model.FlightInfo, time.Time, error) {
 
 // GetAllFlights retrieves all the logged FlightInfo.
 func (c *DB) GetAllFlights() ([]*model.FlightInfo, []time.Time, error) {
-	rows, err := c.db.Query("SELECT value, last_seen FROM flight_log ORDER BY last_seen DESC")
+	rows, err := c.db.Query("SELECT value, last_seen, identification_count FROM flight_log ORDER BY last_seen DESC")
 	if err != nil {
 		return nil, nil, err
 	}
@@ -88,7 +102,8 @@ func (c *DB) GetAllFlights() ([]*model.FlightInfo, []time.Time, error) {
 	for rows.Next() {
 		var jsonValue string
 		var lastSeen time.Time
-		if err := rows.Scan(&jsonValue, &lastSeen); err != nil {
+		var identificationCount int
+		if err := rows.Scan(&jsonValue, &lastSeen, &identificationCount); err != nil {
 			return nil, nil, err
 		}
 
@@ -96,6 +111,7 @@ func (c *DB) GetAllFlights() ([]*model.FlightInfo, []time.Time, error) {
 		if err := json.Unmarshal([]byte(jsonValue), &flightInfo); err != nil {
 			return nil, nil, err
 		}
+		flightInfo.IdentificationCount = identificationCount
 		flights = append(flights, &flightInfo)
 		lastSeens = append(lastSeens, lastSeen)
 	}
@@ -114,7 +130,7 @@ func (c *DB) LogFlight(key string, flightInfo *model.FlightInfo) error {
 		return err
 	}
 
-	_, err = c.db.Exec("INSERT OR REPLACE INTO flight_log (key, value, last_seen) VALUES (?, ?, ?)", key, string(jsonValue), time.Now())
+	_, err = c.db.Exec("INSERT INTO flight_log (key, value, last_seen, identification_count) VALUES (?, ?, ?, 1) ON CONFLICT(key) DO UPDATE SET value = excluded.value, last_seen = excluded.last_seen, identification_count = identification_count + 1", key, string(jsonValue), time.Now())
 	log.Printf("Logged flight for key: %s\n", key)
 	return err
 }
@@ -123,7 +139,8 @@ func (c *DB) LogFlight(key string, flightInfo *model.FlightInfo) error {
 func (c *DB) GetLatestFlight() (*model.FlightInfo, time.Time, error) {
 	var jsonValue string
 	var lastSeen time.Time
-	err := c.db.QueryRow("SELECT value, last_seen FROM flight_log ORDER BY last_seen DESC LIMIT 1").Scan(&jsonValue, &lastSeen)
+	var identificationCount int
+	err := c.db.QueryRow("SELECT value, last_seen, identification_count FROM flight_log ORDER BY last_seen DESC LIMIT 1").Scan(&jsonValue, &lastSeen, &identificationCount)
 	if err == sql.ErrNoRows {
 		return nil, time.Time{}, nil // No flights in cache
 	}
@@ -135,6 +152,7 @@ func (c *DB) GetLatestFlight() (*model.FlightInfo, time.Time, error) {
 	if err := json.Unmarshal([]byte(jsonValue), &flightInfo); err != nil {
 		return nil, time.Time{}, err
 	}
+	flightInfo.IdentificationCount = identificationCount
 
 	return &flightInfo, lastSeen, nil
 }

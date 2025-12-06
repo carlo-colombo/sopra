@@ -2,11 +2,13 @@ package service
 
 import (
 	"errors"
+	"fmt"
+	"os"
 	"testing"
 	"time"
 
-	"github.com/carlo-colombo/sopra/database"
 	"github.com/carlo-colombo/sopra/config"
+	"github.com/carlo-colombo/sopra/database"
 	"github.com/carlo-colombo/sopra/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -15,10 +17,16 @@ import (
 // newTestDB creates a new in-memory database for testing.
 func newTestDB(t *testing.T) *database.DB {
 	t.Helper()
-	db, err := database.NewDB(":memory:")
+	dbName := fmt.Sprintf("%s.db", t.Name())
+	os.Remove(dbName) // Clean up before test
+	db, err := database.NewDB(dbName, "../migrations")
 	if err != nil {
 		t.Fatalf("failed to create test db: %v", err)
 	}
+	t.Cleanup(func() {
+		db.Close()
+		os.Remove(dbName)
+	})
 	return db
 }
 
