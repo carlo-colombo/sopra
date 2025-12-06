@@ -7,6 +7,7 @@ import (
 	"github.com/carlo-colombo/sopra/model"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/carlo-colombo/sopra/database"
 )
@@ -45,7 +46,7 @@ func (s *Server) Start() {
 }
 
 func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
-	flight, err := s.db.GetLatestFlight()
+	flight, lastSeen, err := s.db.GetLatestFlight()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -56,19 +57,23 @@ func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := struct {
-		Flight       string `json:"flight"`
-		Operator     string `json:"operator"`
-		DestinationCity string `json:"destination_city"`
-		DestinationCode string `json:"destination_code"`
-		SourceCity   string `json:"source_city"`
-		SourceCode   string `json:"source_code"`
+		Flight          string    `json:"flight"`
+		Operator        string    `json:"operator"`
+		DestinationCity string    `json:"destination_city"`
+		DestinationCode string    `json:"destination_code"`
+		SourceCity      string    `json:"source_city"`
+		SourceCode      string    `json:"source_code"`
+		LastTimeSeen    time.Time `json:"last_time_seen"`
+		AirplaneModel   string    `json:"airplane_model"`
 	}{
-		Flight:       flight.Ident,
-		Operator:     flight.Operator,
+		Flight:          flight.Ident,
+		Operator:        flight.Operator,
 		DestinationCity: flight.Destination.City,
 		DestinationCode: flight.Destination.AirportCode,
-		SourceCity:   flight.Origin.City,
-		SourceCode:   flight.Origin.AirportCode,
+		SourceCity:      flight.Origin.City,
+		SourceCode:      flight.Origin.AirportCode,
+		LastTimeSeen:    lastSeen,
+		AirplaneModel:   flight.AircraftType,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

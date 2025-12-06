@@ -77,21 +77,22 @@ func (c *DB) LogFlight(key string, flightInfo *model.FlightInfo) error {
 }
 
 // GetLatestFlight retrieves the most recently logged FlightInfo.
-func (c *DB) GetLatestFlight() (*model.FlightInfo, error) {
+func (c *DB) GetLatestFlight() (*model.FlightInfo, time.Time, error) {
 	var jsonValue string
-	err := c.db.QueryRow("SELECT value FROM flight_log ORDER BY last_seen DESC LIMIT 1").Scan(&jsonValue)
+	var lastSeen time.Time
+	err := c.db.QueryRow("SELECT value, last_seen FROM flight_log ORDER BY last_seen DESC LIMIT 1").Scan(&jsonValue, &lastSeen)
 	if err == sql.ErrNoRows {
-		return nil, nil // No flights in cache
+		return nil, time.Time{}, nil // No flights in cache
 	}
 	if err != nil {
-		return nil, err
+		return nil, time.Time{}, err
 	}
 
 	var flightInfo model.FlightInfo
 	if err := json.Unmarshal([]byte(jsonValue), &flightInfo); err != nil {
-		return nil, err
+		return nil, time.Time{}, err
 	}
 
-	return &flightInfo, nil
+	return &flightInfo, lastSeen, nil
 }
 

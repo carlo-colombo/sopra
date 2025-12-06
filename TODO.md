@@ -47,6 +47,7 @@ This document outlines the tasks required to integrate OpenSky and FlightAware t
 -   [x] Create a simple command-line interface or a web server to trigger the flight fetching process.
 -   [x] The application should periodically fetch and display the flight information (flight number, origin, destination, etc.).
 -   [x] Implement logging to provide insights into the application's behavior.
+-   [x] Enhance `/last-flight` endpoint to include `last_time_seen` and `airplane_model` in the JSON response.
 
 ## 6. Models
 
