@@ -1,0 +1,30 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: 1.22
+    - name: Test
+      run: go test ./...
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: build
+        uses: buildpacks/pack-action@v0.8.1
+        with:
+          builder: gcr.io/buildpacks/builder:v1
+          image: sopra-server
