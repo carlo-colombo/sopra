@@ -58,13 +58,15 @@ func (s *Service) GetFlightsInRadius(lat, lon, radius float64) ([]model.FlightIn
 
 	openskyFlights, err := s.openskyClient.GetStatesInRadius(lat, lon, radius)
 
-	if err != nil {
+		if err != nil {
 
-		return nil, err
+			return nil, err
 
-	}
+		}
 
-	var enrichedFlights []model.FlightInfo
+	
+
+		var enrichedFlights []model.FlightInfo
 
 	for _, flight := range openskyFlights {
 
@@ -75,6 +77,8 @@ func (s *Service) GetFlightsInRadius(lat, lon, radius float64) ([]model.FlightIn
 		}
 
 		flightInfo, err := s.flightawareClient.GetFlightInfo(flight.Callsign)
+
+		break
 
 		if err != nil {
 

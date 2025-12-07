@@ -66,7 +66,7 @@ func (c *FlightAwareClient) GetFlightInfo(ident string) (*model.FlightInfo, erro
 	}
 
 	var faResponse model.FlightAwareResponse
-	if err := json.NewDecoder(resp.Body).Decode(&faResponse); err != nil {
+	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&faResponse); err != nil {
 		return nil, fmt.Errorf("failed to decode FlightAware API response: %w", err)
 	}
 
