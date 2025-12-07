@@ -1,3 +1,6 @@
 # Ignore generated files and backups
 model/response.json
 sopra.db.bak
+.envrc
+sopra
+sopra.db
