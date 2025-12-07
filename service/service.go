@@ -78,8 +78,6 @@ func (s *Service) GetFlightsInRadius(lat, lon, radius float64) ([]model.FlightIn
 
 		flightInfo, err := s.flightawareClient.GetFlightInfo(flight.Callsign)
 
-		break
-
 		if err != nil {
 
 			log.Printf("Could not get FlightAware info for callsign %s (ICAO24: %s): %v", flight.Callsign, flight.Icao24, err)
@@ -104,17 +102,17 @@ func (s *Service) GetFlightsInRadius(lat, lon, radius float64) ([]model.FlightIn
 
 func (s *Service) LogFlights(flights []model.FlightInfo) {
 
-	for _, flight := range flights {
+		for _, flight := range flights { // Changed back to use flight
 
-		err := s.db.LogFlight(flight.Ident, &flight)
+			err := s.db.LogFlight(flight.Ident, &flight)
 
-		if err != nil {
+			if err != nil {
 
-			log.Printf("Error logging flight %s: %v", flight.Ident, err)
+				log.Printf("Error logging flight %s: %v", flight.Ident, err)
+
+			}
 
 		}
-
-	}
 
 }
 
