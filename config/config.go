@@ -8,10 +8,10 @@ import (
 
 // Config holds the application's configuration.
 type Config struct {
-	Print    bool `mapstructure:"print"`
-	Watch    bool `mapstructure:"watch"`
-	Interval int  `mapstructure:"interval"`
-	Port     int  `mapstructure:"port"`
+	Print    bool   `mapstructure:"print"`
+	Watch    bool   `mapstructure:"watch"`
+	Interval int    `mapstructure:"interval"`
+	Port     int    `mapstructure:"port"`
 	DBPath   string `mapstructure:"db_path"`
 
 	OpenSkyClient struct {

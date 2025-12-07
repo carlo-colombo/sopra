@@ -15,8 +15,8 @@ import (
 
 // MockOpenSkyClient is a mock implementation of OpenSkyAPIClient for testing.
 type MockOpenSkyClient struct {
-	mu            sync.Mutex
-	GetStatesCalls int
+	mu              sync.Mutex
+	GetStatesCalls  int
 	FlightsToReturn []model.Flight // Flights to return on GetStatesInRadius call
 	ErrToReturn     error          // Error to return on GetStatesInRadius call
 }
@@ -62,7 +62,7 @@ func TestService_RunWatchMode(t *testing.T) {
 	// 2. Setup a mock FlightAware client
 	mockFlightAware := &MockFlightAwareClient{}
 	mockFlightAware.FlightToReturn = &model.FlightInfo{
-		Ident:    "UAL123",
+		Ident:      "UAL123",
 		FaFlightID: "UAL123-12345",
 	}
 

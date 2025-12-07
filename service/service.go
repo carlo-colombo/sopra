@@ -19,23 +19,18 @@ type FlightAwareAPIClient interface {
 	GetFlightInfo(ident string) (*model.FlightInfo, error)
 }
 
-
-
 // Service is the main service for the application.
 
 type Service struct {
-
-	openskyClient     OpenSkyAPIClient
+	openskyClient OpenSkyAPIClient
 
 	flightawareClient FlightAwareAPIClient
 
-	db                *database.DB
+	db *database.DB
 
-	cfg               *config.Config // Add config to the service struct
+	cfg *config.Config // Add config to the service struct
 
 }
-
-
 
 // NewService creates a new Service.
 
@@ -43,27 +38,23 @@ func NewService(openskyClient OpenSkyAPIClient, flightawareClient FlightAwareAPI
 
 	return &Service{
 
-		openskyClient:     openskyClient,
+		openskyClient: openskyClient,
 
 		flightawareClient: flightawareClient,
 
-		db:                db,
+		db: db,
 
-		cfg:               cfg, // Store the config
+		cfg: cfg, // Store the config
 
 	}
 
 }
-
-
 
 // GetFlightsInRadius returns a list of enriched FlightInfo objects within a given radius from a location.
 
 func (s *Service) GetFlightsInRadius(lat, lon, radius float64) ([]model.FlightInfo, error) {
 
 	log.Printf("Request for flights in radius %f from position (%f, %f)\n", radius, lat, lon)
-
-
 
 	openskyFlights, err := s.openskyClient.GetStatesInRadius(lat, lon, radius)
 
@@ -72,8 +63,6 @@ func (s *Service) GetFlightsInRadius(lat, lon, radius float64) ([]model.FlightIn
 		return nil, err
 
 	}
-
-
 
 	var enrichedFlights []model.FlightInfo
 
@@ -84,8 +73,6 @@ func (s *Service) GetFlightsInRadius(lat, lon, radius float64) ([]model.FlightIn
 			continue // Skip flights without a callsign for FlightAware lookup
 
 		}
-
-
 
 		flightInfo, err := s.flightawareClient.GetFlightInfo(flight.Callsign)
 
@@ -105,13 +92,9 @@ func (s *Service) GetFlightsInRadius(lat, lon, radius float64) ([]model.FlightIn
 
 	}
 
-
-
 	return enrichedFlights, nil
 
 }
-
-
 
 // LogFlights logs a slice of flights to the database.
 
@@ -131,8 +114,6 @@ func (s *Service) LogFlights(flights []model.FlightInfo) {
 
 }
 
-
-
 // RunWatchMode continuously fetches and logs flights at a specified interval.
 
 func (s *Service) RunWatchMode(interval int) {
@@ -140,8 +121,6 @@ func (s *Service) RunWatchMode(interval int) {
 	ticker := time.NewTicker(time.Duration(interval) * time.Second)
 
 	defer ticker.Stop()
-
-
 
 	for range ticker.C {
 

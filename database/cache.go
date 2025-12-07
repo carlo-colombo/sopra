@@ -7,8 +7,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/carlo-colombo/sopra/model"
 	"github.com/carlo-colombo/sopra/migrations"
+	"github.com/carlo-colombo/sopra/model"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/sqlite3"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
@@ -64,8 +64,6 @@ func (c *DB) GetFlightCount() (int, error) {
 	}
 	return count, nil
 }
-
-
 
 // GetFlight retrieves a cached FlightInfo by key.
 func (c *DB) GetFlight(key string) (*model.FlightInfo, time.Time, error) {
@@ -158,4 +156,3 @@ func (c *DB) GetLatestFlight() (*model.FlightInfo, time.Time, error) {
 
 	return &flightInfo, lastSeen, nil
 }
-

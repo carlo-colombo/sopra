@@ -78,19 +78,24 @@ func TestGetFlightsInRadius(t *testing.T) {
 	mockOpenSkyClient.On("GetStatesInRadius", 40.7128, -74.0060, 100.0).Return(openskyFlights, nil)
 
 	// Mock FlightAware client to return flight info for UAL123
+	now := time.Now()
 	flightAwareInfo := &model.FlightInfo{
 		Ident:        "UAL123",
 		Operator:     "United Airlines",
 		AircraftType: "B738",
-		Origin:       model.AirportDetail{CodeIATA: "KORD"},
-		Destination:  model.AirportDetail{CodeIATA: "KLAX"},
+<<<<<<< HEAD
+		Origin:       model.AirportDetail{Code: "KORD"},
+		Destination:  model.AirportDetail{Code: "KLAX"},
+=======
+		Origin:       model.AirportDetail{Code: "KORD"},
+		Destination:  model.AirportDetail{Code: "KLAX"},
+>>>>>>> 354d810 (Fix: Resolve test compilation errors and format code)
 		Status:       "En Route",
-		ScheduledOut: time.Now(),
+		ScheduledOut: &now,
 	}
 	mockFlightAwareClient.On("GetFlightInfo", "UAL123").Return(flightAwareInfo, nil)
 	// For the flight without callsign, expect no call to FlightAware
 	mockFlightAwareClient.On("GetFlightInfo", "").Return(nil, nil).Maybe()
-
 
 	cfg := &config.Config{} // Dummy config
 	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db, cfg)
@@ -106,8 +111,13 @@ func TestGetFlightsInRadius(t *testing.T) {
 	// Check the enriched flight details
 	assert.Equal(t, flightAwareInfo.Ident, flights[0].Ident)
 	assert.Equal(t, flightAwareInfo.Operator, flights[0].Operator)
-	assert.Equal(t, flightAwareInfo.Origin.CodeIATA, flights[0].Origin.CodeIATA)
-	assert.Equal(t, flightAwareInfo.Destination.CodeIATA, flights[0].Destination.CodeIATA)
+<<<<<<< HEAD
+	assert.Equal(t, flightAwareInfo.Origin.Code, flights[0].Origin.Code)
+	assert.Equal(t, flightAwareInfo.Destination.Code, flights[0].Destination.Code)
+=======
+	assert.Equal(t, flightAwareInfo.Origin.Code, flights[0].Origin.Code)
+	assert.Equal(t, flightAwareInfo.Destination.Code, flights[0].Destination.Code)
+>>>>>>> 354d810 (Fix: Resolve test compilation errors and format code)
 
 	mockOpenSkyClient.AssertExpectations(t)
 	mockFlightAwareClient.AssertExpectations(t)

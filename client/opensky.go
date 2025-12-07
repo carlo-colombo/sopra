@@ -7,9 +7,9 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/carlo-colombo/sopra/haversine"
 	"github.com/carlo-colombo/sopra/model"
 	"golang.org/x/oauth2/clientcredentials"
-	"github.com/carlo-colombo/sopra/haversine"
 )
 
 // OpenSkyClient is a client for the OpenSky Network API.
@@ -94,4 +94,3 @@ func (c *OpenSkyClient) GetStatesInRadius(lat, lon, radiusKm float64) ([]model.F
 	}
 	return filteredFlights, nil
 }
-

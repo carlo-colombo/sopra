@@ -50,6 +50,7 @@ func TestNewFlightAwareClient(t *testing.T) {
 
 func TestGetFlightInfo_Success(t *testing.T) {
 	expectedIdent := "UAL123"
+	now := time.Now()
 	mockResponse := model.FlightAwareResponse{
 		Flights: []model.FlightInfo{
 			{
@@ -57,21 +58,24 @@ func TestGetFlightInfo_Success(t *testing.T) {
 				Operator:     "United Airlines",
 				AircraftType: "B738",
 				Origin: model.AirportDetail{
-					CodeIATA:    "ORD",
-					AirportName: "Chicago O'Hare International Airport",
+					Code: "ORD",
+					Name: "Chicago O'Hare International Airport",
 				},
 				Destination: model.AirportDetail{
-					CodeIATA:    "LAX",
-					AirportName: "Los Angeles International Airport",
+					Code: "LAX",
+					Name: "Los Angeles International Airport",
 				},
-				ScheduledOut: time.Now(),
-				EstimatedOut: time.Now(),
+				ScheduledOut: &now,
+				EstimatedOut: &now,
 				ActualOut:    nil,
-				ScheduledOn:  time.Now(),
-				EstimatedOn:  time.Now(),
-				ActualOn:     nil,
-				ScheduledIn:  time.Now(),
-				EstimatedIn:  time.Now(),
+				ScheduledOff: now,
+				EstimatedOff: now,
+				ActualOff:    now,
+				ScheduledOn:  now,
+				EstimatedOn:  now,
+				ActualOn:     now,
+				ScheduledIn:  &now,
+				EstimatedIn:  &now,
 				ActualIn:     nil,
 				Status:       "En Route",
 			},
@@ -108,11 +112,11 @@ func TestGetFlightInfo_Success(t *testing.T) {
 	if flightInfo.Ident != expectedIdent {
 		t.Errorf("Expected ident %s, but got %s", expectedIdent, flightInfo.Ident)
 	}
-	if flightInfo.Origin.CodeIATA != mockResponse.Flights[0].Origin.CodeIATA {
-		t.Errorf("Expected origin airport code %s, but got %s", mockResponse.Flights[0].Origin.CodeIATA, flightInfo.Origin.CodeIATA)
+	if flightInfo.Origin.Code != mockResponse.Flights[0].Origin.Code {
+		t.Errorf("Expected origin airport code %s, but got %s", mockResponse.Flights[0].Origin.Code, flightInfo.Origin.Code)
 	}
-	if flightInfo.Destination.CodeIATA != mockResponse.Flights[0].Destination.CodeIATA {
-		t.Errorf("Expected destination airport code %s, but got %s", mockResponse.Flights[0].Destination.CodeIATA, flightInfo.Destination.CodeIATA)
+	if flightInfo.Destination.Code != mockResponse.Flights[0].Destination.Code {
+		t.Errorf("Expected destination airport code %s, but got %s", mockResponse.Flights[0].Destination.Code, flightInfo.Destination.Code)
 	}
 	if flightInfo.Status != "En Route" {
 		t.Errorf("Expected status %s, but got %s", "En Route", flightInfo.Status)
