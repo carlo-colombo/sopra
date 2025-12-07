@@ -1,7 +1,3 @@
-.envrc
-sopra
-*.exe
-*.test
-*.prof
-sopra.log
-sopra.db
+# Ignore generated files and backups
+model/response.json
+sopra.db.bak

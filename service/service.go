@@ -98,9 +98,9 @@ func (s *Service) GetFlightsInRadius(lat, lon, radius float64) ([]model.FlightIn
 		}
 
 		if flightInfo != nil {
-
+			flightInfo.Latitude = flight.Latitude
+			flightInfo.Longitude = flight.Longitude
 			enrichedFlights = append(enrichedFlights, *flightInfo)
-
 		}
 
 	}

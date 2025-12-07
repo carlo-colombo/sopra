@@ -55,7 +55,7 @@ func main() {
 		log.Printf("Error getting latest flight from DB: %v", err)
 	} else if latestFlight != nil {
 		log.Printf("Last flight recorded: Callsign=%s, Origin=%s, Latitude=%.2f, Longitude=%.2f, LastSeen=%s",
-			latestFlight.Ident, latestFlight.Origin.Country, latestFlight.Latitude, latestFlight.Longitude, lastSeen.Format(time.RFC3339))
+			latestFlight.Ident, latestFlight.Origin.Name, latestFlight.Latitude, latestFlight.Longitude, lastSeen.Format(time.RFC3339))
 	} else {
 		log.Println("No flights recorded in the database yet.")
 	}
