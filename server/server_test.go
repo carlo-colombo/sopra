@@ -86,12 +86,12 @@ func TestGetAllFlightsHandler(t *testing.T) {
 		Ident:    "FL001",
 		Operator: "TestAir",
 		Origin: model.AirportDetail{
-			City:        "Testville",
-			AirportCode: "TST",
+			City:     "Testville",
+			CodeIATA: "TST",
 		},
 		Destination: model.AirportDetail{
-			City:        "Testburg",
-			AirportCode: "TSB",
+			City:     "Testburg",
+			CodeIATA: "TSB",
 		},
 		AircraftType: "B737",
 	}
@@ -99,12 +99,12 @@ func TestGetAllFlightsHandler(t *testing.T) {
 		Ident:    "FL002",
 		Operator: "TestAir",
 		Origin: model.AirportDetail{
-			City:        "Testburg",
-			AirportCode: "TSB",
+			City:     "Testburg",
+			CodeIATA: "TSB",
 		},
 		Destination: model.AirportDetail{
-			City:        "Testville",
-			AirportCode: "TST",
+			City:     "Testville",
+			CodeIATA: "TST",
 		},
 		AircraftType: "A320",
 	}

@@ -50,7 +50,7 @@ type FlightInfo struct {
 
 // AirportDetail represents detailed information about an airport.
 type AirportDetail struct {
-	AirportCode string `json:"airport_code"`
+	CodeIATA    string `json:"code_iata"`
 	AirportName string `json:"airport_name"`
 	City        string `json:"city"`
 	State       string `json:"state"`

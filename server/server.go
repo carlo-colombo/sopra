@@ -61,18 +61,18 @@ func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
 		Flight          string    `json:"flight"`
 		Operator        string    `json:"operator"`
 		DestinationCity string    `json:"destination_city"`
-		DestinationCode string    `json:"destination_code"`
+		DestinationCode string    `json:"destination_code_iata"`
 		SourceCity      string    `json:"source_city"`
-		SourceCode      string    `json:"source_code"`
+		SourceCode      string    `json:"source_code_iata"`
 		LastTimeSeen    time.Time `json:"last_time_seen"`
 		AirplaneModel   string    `json:"airplane_model"`
 	}{
 		Flight:          flight.Ident,
 		Operator:        flight.Operator,
 		DestinationCity: flight.Destination.City,
-		DestinationCode: flight.Destination.AirportCode,
+		DestinationCode: flight.Destination.CodeIATA,
 		SourceCity:      flight.Origin.City,
-		SourceCode:      flight.Origin.AirportCode,
+		SourceCode:      flight.Origin.CodeIATA,
 		LastTimeSeen:    lastSeen,
 		AirplaneModel:   flight.AircraftType,
 	}
@@ -99,9 +99,9 @@ func (s *Server) getAllFlightsHandler(w http.ResponseWriter, r *http.Request) {
 		Flight          string    `json:"flight"`
 		Operator        string    `json:"operator"`
 		DestinationCity string    `json:"destination_city"`
-		DestinationCode string    `json:"destination_code"`
+		DestinationCode string    `json:"destination_code_iata"`
 		SourceCity      string    `json:"source_city"`
-		SourceCode      string    `json:"source_code"`
+		SourceCode      string    `json:"source_code_iata"`
 		LastTimeSeen    time.Time `json:"last_time_seen"`
 		AirplaneModel   string    `json:"airplane_model"`
 	}
@@ -112,9 +112,9 @@ func (s *Server) getAllFlightsHandler(w http.ResponseWriter, r *http.Request) {
 			Flight:          flight.Ident,
 			Operator:        flight.Operator,
 			DestinationCity: flight.Destination.City,
-			DestinationCode: flight.Destination.AirportCode,
+			DestinationCode: flight.Destination.CodeIATA,
 			SourceCity:      flight.Origin.City,
-			SourceCode:      flight.Origin.AirportCode,
+			SourceCode:      flight.Origin.CodeIATA,
 			LastTimeSeen:    lastSeens[i],
 			AirplaneModel:   flight.AircraftType,
 		}

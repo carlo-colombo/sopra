@@ -57,11 +57,11 @@ func TestGetFlightInfo_Success(t *testing.T) {
 				Operator:     "United Airlines",
 				AircraftType: "B738",
 				Origin: model.AirportDetail{
-					AirportCode: "ORD",
+					CodeIATA:    "ORD",
 					AirportName: "Chicago O'Hare International Airport",
 				},
 				Destination: model.AirportDetail{
-					AirportCode: "LAX",
+					CodeIATA:    "LAX",
 					AirportName: "Los Angeles International Airport",
 				},
 				ScheduledOut: time.Now(),
@@ -108,11 +108,11 @@ func TestGetFlightInfo_Success(t *testing.T) {
 	if flightInfo.Ident != expectedIdent {
 		t.Errorf("Expected ident %s, but got %s", expectedIdent, flightInfo.Ident)
 	}
-	if flightInfo.Origin.AirportCode != mockResponse.Flights[0].Origin.AirportCode {
-		t.Errorf("Expected origin airport code %s, but got %s", mockResponse.Flights[0].Origin.AirportCode, flightInfo.Origin.AirportCode)
+	if flightInfo.Origin.CodeIATA != mockResponse.Flights[0].Origin.CodeIATA {
+		t.Errorf("Expected origin airport code %s, but got %s", mockResponse.Flights[0].Origin.CodeIATA, flightInfo.Origin.CodeIATA)
 	}
-	if flightInfo.Destination.AirportCode != mockResponse.Flights[0].Destination.AirportCode {
-		t.Errorf("Expected destination airport code %s, but got %s", mockResponse.Flights[0].Destination.AirportCode, flightInfo.Destination.AirportCode)
+	if flightInfo.Destination.CodeIATA != mockResponse.Flights[0].Destination.CodeIATA {
+		t.Errorf("Expected destination airport code %s, but got %s", mockResponse.Flights[0].Destination.CodeIATA, flightInfo.Destination.CodeIATA)
 	}
 	if flightInfo.Status != "En Route" {
 		t.Errorf("Expected status %s, but got %s", "En Route", flightInfo.Status)
