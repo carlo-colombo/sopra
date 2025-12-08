@@ -70,15 +70,9 @@ func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
 		Flight:          flight.Ident,
 		Operator:        flight.Operator,
 		DestinationCity: flight.Destination.City,
-<<<<<<< HEAD
 		DestinationCode: flight.Destination.Code,
 		SourceCity:      flight.Origin.City,
 		SourceCode:      flight.Origin.Code,
-=======
-		DestinationCode: flight.Destination.Code,
-		SourceCity:      flight.Origin.City,
-		SourceCode:      flight.Origin.Code,
->>>>>>> af10430 (feat: Update FlightAware data models and related logic)
 		LastTimeSeen:    lastSeen,
 		AirplaneModel:   flight.AircraftType,
 	}
@@ -118,15 +112,9 @@ func (s *Server) getAllFlightsHandler(w http.ResponseWriter, r *http.Request) {
 			Flight:          flight.Ident,
 			Operator:        flight.Operator,
 			DestinationCity: flight.Destination.City,
-<<<<<<< HEAD
 			DestinationCode: flight.Destination.Code,
 			SourceCity:      flight.Origin.City,
 			SourceCode:      flight.Origin.Code,
-=======
-			DestinationCode: flight.Destination.Code,
-			SourceCity:      flight.Origin.City,
-			SourceCode:      flight.Origin.Code,
->>>>>>> af10430 (feat: Update FlightAware data models and related logic)
 			LastTimeSeen:    lastSeens[i],
 			AirplaneModel:   flight.AircraftType,
 		}

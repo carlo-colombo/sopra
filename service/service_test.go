@@ -81,13 +81,8 @@ func TestGetFlightsInRadius(t *testing.T) {
 		Ident:        "UAL123",
 		Operator:     "United Airlines",
 		AircraftType: "B738",
-<<<<<<< HEAD
 		Origin:       model.AirportDetail{Code: "KORD"},
 		Destination:  model.AirportDetail{Code: "KLAX"},
-=======
-		Origin:       model.AirportDetail{Code: "KORD"},
-		Destination:  model.AirportDetail{Code: "KLAX"},
->>>>>>> 354d810 (Fix: Resolve test compilation errors and format code)
 		Status:       "En Route",
 		// ScheduledOut: &now, // Removed to avoid time-dependent issues
 	}
@@ -108,13 +103,8 @@ func TestGetFlightsInRadius(t *testing.T) {
 	// Check the enriched flight details
 	assert.Equal(t, flightAwareInfo.Ident, flights[0].Ident)
 	assert.Equal(t, flightAwareInfo.Operator, flights[0].Operator)
-<<<<<<< HEAD
 	assert.Equal(t, flightAwareInfo.Origin.Code, flights[0].Origin.Code)
 	assert.Equal(t, flightAwareInfo.Destination.Code, flights[0].Destination.Code)
-=======
-	assert.Equal(t, flightAwareInfo.Origin.Code, flights[0].Origin.Code)
-	assert.Equal(t, flightAwareInfo.Destination.Code, flights[0].Destination.Code)
->>>>>>> 354d810 (Fix: Resolve test compilation errors and format code)
 
 	mockOpenSkyClient.AssertExpectations(t)
 	mockFlightAwareClient.AssertExpectations(t)
