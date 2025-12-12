@@ -137,3 +137,65 @@ func TestGetAllFlightsHandler(t *testing.T) {
 	assert.Equal(t, "FL002", actualFlights[0]["flight"])
 	assert.Equal(t, "FL001", actualFlights[1]["flight"])
 }
+
+func TestGetStatsHandler(t *testing.T) {
+	// Create a new in-memory database for testing
+	db := newTestDB(t)
+
+	// Log some dummy flight data
+	flight1 := &model.FlightInfo{
+		Ident:    "FL001",
+		Operator: "TestAir",
+		Origin: model.AirportDetail{
+			City: "Testville",
+			Code: "TST",
+		},
+		Destination: model.AirportDetail{
+			City: "Testburg",
+			Code: "TSB",
+		},
+		AircraftType: "B737",
+	}
+	flight2 := &model.FlightInfo{
+		Ident:    "FL002",
+		Operator: "TestAir",
+		Origin: model.AirportDetail{
+			City: "Testburg",
+			Code: "TSB",
+		},
+		Destination: model.AirportDetail{
+			City: "Testville",
+			Code: "TST",
+		},
+		AircraftType: "A320",
+	}
+	db.LogFlight("FL001", flight1)
+	db.LogFlight("FL002", flight2)
+
+	// Create a new server with the test database
+	cfg := &config.Config{}
+	server := NewServer(nil, cfg, db)
+
+	// Create a new HTTP request
+	req, err := http.NewRequest("GET", "/", nil)
+	assert.NoError(t, err)
+
+	// Create a ResponseRecorder to record the response
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(server.getStatsHandler)
+
+	// Serve the HTTP request
+	handler.ServeHTTP(rr, req)
+
+	// Check the status code
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	// Check the response body
+	body := rr.Body.String()
+	assert.Contains(t, body, "<h1>Flight Statistics</h1>")
+	assert.Contains(t, body, "<h2>Last Flight Seen</h2>")
+	assert.Contains(t, body, "<td>FL002</td>")
+	assert.Contains(t, body, "<h2>Last 10 Flights Seen</h2>")
+	assert.Contains(t, body, "<td>FL001</td>")
+	assert.Contains(t, body, "<h2>5 Most Common Flights</h2>")
+}

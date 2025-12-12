@@ -1,16 +1,21 @@
 package server
 
 import (
+	_ "embed"
 	"encoding/json"
 	"fmt"
-	"github.com/carlo-colombo/sopra/config"
-	"github.com/carlo-colombo/sopra/model"
+	"html/template"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/carlo-colombo/sopra/config"
 	"github.com/carlo-colombo/sopra/database"
+	"github.com/carlo-colombo/sopra/model"
 )
+
+//go:embed statics/index.html
+var indexHTML string
 
 // FlightService defines the interface for the flight service.
 type FlightService interface {
@@ -19,22 +24,29 @@ type FlightService interface {
 
 // Server holds the HTTP server and its dependencies.
 type Server struct {
-	service FlightService
-	config  *config.Config
-	db      *database.DB
+	service  FlightService
+	config   *config.Config
+	db       *database.DB
+	template *template.Template
 }
 
 // NewServer creates a new Server instance.
 func NewServer(s FlightService, cfg *config.Config, db *database.DB) *Server {
+	tmpl, err := template.New("index").Parse(indexHTML)
+	if err != nil {
+		log.Fatalf("failed to parse template: %v", err)
+	}
 	return &Server{
-		service: s,
-		config:  cfg,
-		db:      db,
+		service:  s,
+		config:   cfg,
+		db:       db,
+		template: tmpl,
 	}
 }
 
 // Start starts the HTTP server.
 func (s *Server) Start() {
+	http.HandleFunc("/", s.getStatsHandler)
 	http.HandleFunc("/flights", s.getFlightsHandler)
 	http.HandleFunc("/last-flight", s.getLastFlightHandler)
 	http.HandleFunc("/all-flights", s.getAllFlightsHandler)
@@ -79,6 +91,62 @@ func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *Server) getStatsHandler(w http.ResponseWriter, r *http.Request) {
+	lastFlight, lastFlightSeen, err := s.db.GetLatestFlight()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	last10Flights, last10FlightsSeen, err := s.db.GetLast10Flights()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	mostCommonFlights, err := s.db.GetMostCommonFlights()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	type FlightData struct {
+		*model.FlightInfo
+		LastSeen time.Time
+	}
+
+	var lastFlightData *FlightData
+	if lastFlight != nil {
+		lastFlightData = &FlightData{
+			FlightInfo: lastFlight,
+			LastSeen:   lastFlightSeen,
+		}
+	}
+
+	var last10FlightsData []FlightData
+	for i, flight := range last10Flights {
+		last10FlightsData = append(last10FlightsData, FlightData{
+			FlightInfo: flight,
+			LastSeen:   last10FlightsSeen[i],
+		})
+	}
+
+	data := struct {
+		LastFlight        *FlightData
+		Last10Flights     []FlightData
+		MostCommonFlights []*model.FlightInfo
+	}{
+		LastFlight:        lastFlightData,
+		Last10Flights:     last10FlightsData,
+		MostCommonFlights: mostCommonFlights,
+	}
+
+	if err := s.template.Execute(w, data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

@@ -88,6 +88,73 @@ func (c *DB) GetFlight(key string) (*model.FlightInfo, time.Time, error) {
 	return &flightInfo, lastSeen, nil
 }
 
+// GetLast10Flights retrieves the last 10 logged FlightInfo.
+func (c *DB) GetLast10Flights() ([]*model.FlightInfo, []time.Time, error) {
+	rows, err := c.db.Query("SELECT value, last_seen, identification_count FROM flight_log ORDER BY last_seen DESC LIMIT 10")
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close()
+
+	var flights []*model.FlightInfo
+	var lastSeens []time.Time
+
+	for rows.Next() {
+		var jsonValue string
+		var lastSeen time.Time
+		var identificationCount int
+		if err := rows.Scan(&jsonValue, &lastSeen, &identificationCount); err != nil {
+			return nil, nil, err
+		}
+
+		var flightInfo model.FlightInfo
+		if err := json.Unmarshal([]byte(jsonValue), &flightInfo); err != nil {
+			return nil, nil, err
+		}
+		flightInfo.IdentificationCount = identificationCount
+		flights = append(flights, &flightInfo)
+		lastSeens = append(lastSeens, lastSeen)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, nil, err
+	}
+
+	return flights, lastSeens, nil
+}
+
+// GetMostCommonFlights retrieves the 5 most common FlightInfo.
+func (c *DB) GetMostCommonFlights() ([]*model.FlightInfo, error) {
+	rows, err := c.db.Query("SELECT value, identification_count FROM flight_log ORDER BY identification_count DESC LIMIT 5")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var flights []*model.FlightInfo
+
+	for rows.Next() {
+		var jsonValue string
+		var identificationCount int
+		if err := rows.Scan(&jsonValue, &identificationCount); err != nil {
+			return nil, err
+		}
+
+		var flightInfo model.FlightInfo
+		if err := json.Unmarshal([]byte(jsonValue), &flightInfo); err != nil {
+			return nil, err
+		}
+		flightInfo.IdentificationCount = identificationCount
+		flights = append(flights, &flightInfo)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return flights, nil
+}
+
 // GetAllFlights retrieves all the logged FlightInfo.
 func (c *DB) GetAllFlights() ([]*model.FlightInfo, []time.Time, error) {
 	rows, err := c.db.Query("SELECT value, last_seen, identification_count FROM flight_log ORDER BY last_seen DESC")
