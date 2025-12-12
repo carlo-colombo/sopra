@@ -34,7 +34,7 @@ type Server struct {
 func NewServer(s FlightService, cfg *config.Config, db *database.DB) *Server {
 	funcMap := template.FuncMap{
 		"formatTime": func(t time.Time) string {
-			return t.Local().Format("15:04")
+			return t.Local().Format("02/01/2006 15:04")
 		},
 	}
 
