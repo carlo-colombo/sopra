@@ -32,7 +32,13 @@ type Server struct {
 
 // NewServer creates a new Server instance.
 func NewServer(s FlightService, cfg *config.Config, db *database.DB) *Server {
-	tmpl, err := template.New("index").Parse(indexHTML)
+	funcMap := template.FuncMap{
+		"formatTime": func(t time.Time) string {
+			return t.Local().Format("02/01/2006 15:04")
+		},
+	}
+
+	tmpl, err := template.New("index").Funcs(funcMap).Parse(indexHTML)
 	if err != nil {
 		log.Fatalf("failed to parse template: %v", err)
 	}

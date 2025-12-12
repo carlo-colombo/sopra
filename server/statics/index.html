@@ -93,7 +93,7 @@
                         <td>{{.LastFlight.Operator}}</td>
                         <td>{{.LastFlight.Destination.City}} ({{.LastFlight.Destination.Code}})</td>
                         <td>{{.LastFlight.Origin.City}} ({{.LastFlight.Origin.Code}})</td>
-                        <td>{{.LastFlight.LastSeen}}</td>
+                        <td>{{ formatTime .LastFlight.LastSeen }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -119,7 +119,7 @@
                         <td>{{.Operator}}</td>
                         <td>{{.Destination.City}} ({{.Destination.Code}})</td>
                         <td>{{.Origin.City}} ({{.Origin.Code}})</td>
-                        <td>{{.LastSeen}}</td>
+                        <td>{{ formatTime .LastSeen }}</td>
                     </tr>
                     {{end}}
                 </tbody>
