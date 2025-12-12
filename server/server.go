@@ -1,18 +1,21 @@
 package server
 
 import (
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/carlo-colombo/sopra/config"
 	"github.com/carlo-colombo/sopra/database"
 	"github.com/carlo-colombo/sopra/model"
 )
+
+//go:embed statics/index.html
+var indexHTML string
 
 // FlightService defines the interface for the flight service.
 type FlightService interface {
@@ -21,17 +24,23 @@ type FlightService interface {
 
 // Server holds the HTTP server and its dependencies.
 type Server struct {
-	service FlightService
-	config  *config.Config
-	db      *database.DB
+	service  FlightService
+	config   *config.Config
+	db       *database.DB
+	template *template.Template
 }
 
 // NewServer creates a new Server instance.
 func NewServer(s FlightService, cfg *config.Config, db *database.DB) *Server {
+	tmpl, err := template.New("index").Parse(indexHTML)
+	if err != nil {
+		log.Fatalf("failed to parse template: %v", err)
+	}
 	return &Server{
-		service: s,
-		config:  cfg,
-		db:      db,
+		service:  s,
+		config:   cfg,
+		db:       db,
+		template: tmpl,
 	}
 }
 
@@ -137,18 +146,7 @@ func (s *Server) getStatsHandler(w http.ResponseWriter, r *http.Request) {
 		MostCommonFlights: mostCommonFlights,
 	}
 
-	templatePath := "statics/index.html"
-	if _, err := os.Stat(templatePath); os.IsNotExist(err) {
-		templatePath = "../statics/index.html"
-	}
-
-	tmpl, err := template.ParseFiles(templatePath)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if err := tmpl.Execute(w, data); err != nil {
+	if err := s.template.Execute(w, data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
