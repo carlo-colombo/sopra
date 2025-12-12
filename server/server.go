@@ -3,13 +3,15 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/carlo-colombo/sopra/config"
-	"github.com/carlo-colombo/sopra/model"
+	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/carlo-colombo/sopra/config"
 	"github.com/carlo-colombo/sopra/database"
+	"github.com/carlo-colombo/sopra/model"
 )
 
 // FlightService defines the interface for the flight service.
@@ -35,6 +37,7 @@ func NewServer(s FlightService, cfg *config.Config, db *database.DB) *Server {
 
 // Start starts the HTTP server.
 func (s *Server) Start() {
+	http.HandleFunc("/", s.getStatsHandler)
 	http.HandleFunc("/flights", s.getFlightsHandler)
 	http.HandleFunc("/last-flight", s.getLastFlightHandler)
 	http.HandleFunc("/all-flights", s.getAllFlightsHandler)
@@ -79,6 +82,73 @@ func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *Server) getStatsHandler(w http.ResponseWriter, r *http.Request) {
+	lastFlight, lastFlightSeen, err := s.db.GetLatestFlight()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	last10Flights, last10FlightsSeen, err := s.db.GetLast10Flights()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	mostCommonFlights, err := s.db.GetMostCommonFlights()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	type FlightData struct {
+		*model.FlightInfo
+		LastSeen time.Time
+	}
+
+	var lastFlightData *FlightData
+	if lastFlight != nil {
+		lastFlightData = &FlightData{
+			FlightInfo: lastFlight,
+			LastSeen:   lastFlightSeen,
+		}
+	}
+
+	var last10FlightsData []FlightData
+	for i, flight := range last10Flights {
+		last10FlightsData = append(last10FlightsData, FlightData{
+			FlightInfo: flight,
+			LastSeen:   last10FlightsSeen[i],
+		})
+	}
+
+	data := struct {
+		LastFlight        *FlightData
+		Last10Flights     []FlightData
+		MostCommonFlights []*model.FlightInfo
+	}{
+		LastFlight:        lastFlightData,
+		Last10Flights:     last10FlightsData,
+		MostCommonFlights: mostCommonFlights,
+	}
+
+	templatePath := "statics/index.html"
+	if _, err := os.Stat(templatePath); os.IsNotExist(err) {
+		templatePath = "../statics/index.html"
+	}
+
+	tmpl, err := template.ParseFiles(templatePath)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := tmpl.Execute(w, data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
