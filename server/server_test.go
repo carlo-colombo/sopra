@@ -80,6 +80,7 @@ func TestGetFlightsHandler(t *testing.T) {
 func TestGetAllFlightsHandler(t *testing.T) {
 	// Create a new in-memory database for testing
 	db := newTestDB(t)
+	db.ClearFlightLog()
 
 	// Log some dummy flight data
 	flight1 := &model.FlightInfo{

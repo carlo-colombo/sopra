@@ -223,3 +223,9 @@ func (c *DB) GetLatestFlight() (*model.FlightInfo, time.Time, error) {
 
 	return &flightInfo, lastSeen, nil
 }
+
+// ClearFlightLog deletes all records from the flight_log table.
+func (c *DB) ClearFlightLog() error {
+	_, err := c.db.Exec("DELETE FROM flight_log")
+	return err
+}
