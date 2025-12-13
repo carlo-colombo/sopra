@@ -20,6 +20,7 @@ type FlightInfo struct {
 	Operator                      string        `json:"operator"`
 	OperatorIcao                  string        `json:"operator_icao"`
 	OperatorIata                  string        `json:"operator_iata"`
+	OperatorInfo                  OperatorInfo  `json:"operator_info"`
 	FlightNumber                  string        `json:"flight_number"`
 	Registration                  string        `json:"registration"`
 	AtcIdent                      *string       `json:"atc_ident"`
@@ -67,6 +68,12 @@ type FlightInfo struct {
 	Latitude                      float64       `json:"latitude"`
 	Longitude                     float64       `json:"longitude"`
 	IdentificationCount           int           `json:"-"`
+}
+
+// OperatorInfo represents detailed information about an operator.
+type OperatorInfo struct {
+	Name      string `json:"name"`
+	Shortname string `json:"shortname"`
 }
 
 // AirportDetail represents detailed information about an airport.
