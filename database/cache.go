@@ -90,7 +90,13 @@ func (c *DB) GetFlight(key string) (*model.FlightInfo, time.Time, error) {
 
 // GetLast10Flights retrieves the last 10 logged FlightInfo.
 func (c *DB) GetLast10Flights() ([]*model.FlightInfo, []time.Time, error) {
-	rows, err := c.db.Query("SELECT value, last_seen, identification_count FROM flight_log ORDER BY last_seen DESC LIMIT 10")
+	rows, err := c.db.Query(`
+		SELECT value, last_seen, identification_count 
+		FROM flight_log
+		GROUP BY value ->> 'ident'
+		ORDER BY last_seen 
+		DESC LIMIT 10
+	`)
 	if err != nil {
 		return nil, nil, err
 	}
