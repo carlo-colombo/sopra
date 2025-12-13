@@ -74,6 +74,7 @@ type FlightInfo struct {
 type OperatorInfo struct {
 	Name      string `json:"name"`
 	Shortname string `json:"shortname"`
+	Country   string `json:"country"`
 }
 
 // AirportDetail represents detailed information about an airport.
