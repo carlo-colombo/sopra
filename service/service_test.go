@@ -109,9 +109,14 @@ func TestGetFlightsInRadius(t *testing.T) {
 
 	// Check the enriched flight details
 	assert.Equal(t, flightAwareInfo.Ident, flights[0].Ident)
-	assert.Equal(t, "United", flights[0].OperatorInfo.Shortname)
+	assert.Equal(t, flightAwareInfo.OperatorIcao, flights[0].OperatorIcao)
 	assert.Equal(t, flightAwareInfo.Origin.Code, flights[0].Origin.Code)
 	assert.Equal(t, flightAwareInfo.Destination.Code, flights[0].Destination.Code)
+
+	// Check that the operator info was cached
+	cachedOperator, err := db.GetOperator("UAL")
+	assert.NoError(t, err)
+	assert.Equal(t, operatorInfoJSON, cachedOperator)
 
 	mockOpenSkyClient.AssertExpectations(t)
 	mockFlightAwareClient.AssertExpectations(t)

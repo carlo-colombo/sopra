@@ -64,6 +64,21 @@ func (s *Server) Start() {
 	}
 }
 
+func (s *Server) getOperatorInfo(icao string) (*model.OperatorInfo, error) {
+	operatorJSON, err := s.db.GetOperator(icao)
+	if err != nil {
+		return nil, err
+	}
+	if operatorJSON == "" {
+		return &model.OperatorInfo{Shortname: "N/A"}, nil
+	}
+	var operatorInfo model.OperatorInfo
+	if err := json.Unmarshal([]byte(operatorJSON), &operatorInfo); err != nil {
+		return nil, err
+	}
+	return &operatorInfo, nil
+}
+
 func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
 	flight, lastSeen, err := s.db.GetLatestFlight()
 	if err != nil {
@@ -72,6 +87,12 @@ func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if flight == nil {
 		http.Error(w, "No flight data available", http.StatusNotFound)
+		return
+	}
+
+	operator, err := s.getOperatorInfo(flight.OperatorIcao)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -86,7 +107,7 @@ func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
 		AirplaneModel   string    `json:"airplane_model"`
 	}{
 		Flight:          flight.Ident,
-		Operator:        flight.OperatorInfo.Shortname,
+		Operator:        operator.Shortname,
 		DestinationCity: flight.Destination.City,
 		DestinationCode: flight.Destination.Code,
 		SourceCity:      flight.Origin.City,
@@ -121,35 +142,101 @@ func (s *Server) getStatsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Collect all unique operator ICAOs
+	icaoSet := make(map[string]struct{})
+	if lastFlight != nil {
+		icaoSet[lastFlight.OperatorIcao] = struct{}{}
+	}
+	for _, flight := range last10Flights {
+		icaoSet[flight.OperatorIcao] = struct{}{}
+	}
+	for _, flight := range mostCommonFlights {
+		icaoSet[flight.OperatorIcao] = struct{}{}
+	}
+	var icaos []string
+	for icao := range icaoSet {
+		icaos = append(icaos, icao)
+	}
+
+	// Bulk fetch operator info
+	operatorMap, err := s.db.GetOperators(icaos)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	type FlightData struct {
 		*model.FlightInfo
+		Operator *model.OperatorInfo
 		LastSeen time.Time
 	}
 
 	var lastFlightData *FlightData
 	if lastFlight != nil {
+		var operator model.OperatorInfo
+		if opJSON, ok := operatorMap[lastFlight.OperatorIcao]; ok {
+			if err := json.Unmarshal([]byte(opJSON), &operator); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		} else {
+			operator.Shortname = "N/A"
+		}
 		lastFlightData = &FlightData{
 			FlightInfo: lastFlight,
+			Operator:   &operator,
 			LastSeen:   lastFlightSeen,
 		}
 	}
 
 	var last10FlightsData []FlightData
 	for i, flight := range last10Flights {
+		var operator model.OperatorInfo
+		if opJSON, ok := operatorMap[flight.OperatorIcao]; ok {
+			if err := json.Unmarshal([]byte(opJSON), &operator); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		} else {
+			operator.Shortname = "N/A"
+		}
 		last10FlightsData = append(last10FlightsData, FlightData{
 			FlightInfo: flight,
+			Operator:   &operator,
 			LastSeen:   last10FlightsSeen[i],
+		})
+	}
+
+	type MostCommonFlightData struct {
+		*model.FlightInfo
+		Operator *model.OperatorInfo
+	}
+
+	var mostCommonFlightsData []MostCommonFlightData
+	for _, flight := range mostCommonFlights {
+		var operator model.OperatorInfo
+		if opJSON, ok := operatorMap[flight.OperatorIcao]; ok {
+			if err := json.Unmarshal([]byte(opJSON), &operator); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		} else {
+			operator.Shortname = "N/A"
+		}
+		mostCommonFlightsData = append(mostCommonFlightsData, MostCommonFlightData{
+			FlightInfo: flight,
+			Operator:   &operator,
 		})
 	}
 
 	data := struct {
 		LastFlight        *FlightData
 		Last10Flights     []FlightData
-		MostCommonFlights []*model.FlightInfo
+		MostCommonFlights []MostCommonFlightData
 	}{
 		LastFlight:        lastFlightData,
 		Last10Flights:     last10FlightsData,
-		MostCommonFlights: mostCommonFlights,
+		MostCommonFlights: mostCommonFlightsData,
 	}
 
 	if err := s.template.Execute(w, data); err != nil {
@@ -169,6 +256,23 @@ func (s *Server) getAllFlightsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Collect all unique operator ICAOs
+	icaoSet := make(map[string]struct{})
+	for _, flight := range flights {
+		icaoSet[flight.OperatorIcao] = struct{}{}
+	}
+	var icaos []string
+	for icao := range icaoSet {
+		icaos = append(icaos, icao)
+	}
+
+	// Bulk fetch operator info
+	operatorMap, err := s.db.GetOperators(icaos)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	type FlightResponse struct {
 		Flight          string    `json:"flight"`
 		Operator        string    `json:"operator"`
@@ -182,9 +286,18 @@ func (s *Server) getAllFlightsHandler(w http.ResponseWriter, r *http.Request) {
 
 	var responses []FlightResponse
 	for i, flight := range flights {
+		var operator model.OperatorInfo
+		if opJSON, ok := operatorMap[flight.OperatorIcao]; ok {
+			if err := json.Unmarshal([]byte(opJSON), &operator); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		} else {
+			operator.Shortname = "N/A"
+		}
 		response := FlightResponse{
 			Flight:          flight.Ident,
-			Operator:        flight.OperatorInfo.Shortname,
+			Operator:        operator.Shortname,
 			DestinationCity: flight.Destination.City,
 			DestinationCode: flight.Destination.Code,
 			SourceCity:      flight.Origin.City,

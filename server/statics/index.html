@@ -90,7 +90,7 @@
                 <tbody>
                     <tr>
                         <td>{{.LastFlight.Ident}}</td>
-                        <td>{{.LastFlight.OperatorInfo.Shortname}} ({{.LastFlight.OperatorInfo.Country}})</td>
+                        <td>{{.LastFlight.Operator.Shortname}} ({{.LastFlight.Operator.Country}})</td>
                         <td>{{.LastFlight.Destination.City}} ({{.LastFlight.Destination.Code}})</td>
                         <td>{{.LastFlight.Origin.City}} ({{.LastFlight.Origin.Code}})</td>
                         <td>{{ formatTime .LastFlight.LastSeen }}</td>
@@ -116,7 +116,7 @@
                     {{range .Last10Flights}}
                     <tr>
                         <td>{{.Ident}}</td>
-                        <td>{{.OperatorInfo.Shortname}} ({{.OperatorInfo.Country}})</td>
+                        <td>{{.Operator.Shortname}} ({{.Operator.Country}})</td>
                         <td>{{.Destination.City}} ({{.Destination.Code}})</td>
                         <td>{{.Origin.City}} ({{.Origin.Code}})</td>
                         <td>{{ formatTime .LastSeen }}</td>
@@ -144,7 +144,7 @@
                     {{range .MostCommonFlights}}
                     <tr>
                         <td>{{.Ident}}</td>
-                        <td>{{.OperatorInfo.Shortname}} ({{.OperatorInfo.Country}})</td>
+                        <td>{{.Operator.Shortname}} ({{.Operator.Country}})</td>
                         <td>{{.Destination.City}} ({{.Destination.Code}})</td>
                         <td>{{.Origin.City}} ({{.Origin.Code}})</td>
                         <td>{{.IdentificationCount}}</td>
