@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/carlo-colombo/sopra/migrations"
@@ -259,4 +260,38 @@ func (c *DB) GetOperator(icao string) (string, error) {
 	}
 	log.Printf("Cache hit for operator icao: %s\n", icao)
 	return jsonValue, nil
+}
+
+// GetOperators retrieves multiple cached operator's JSON data by ICAO.
+func (c *DB) GetOperators(icaos []string) (map[string]string, error) {
+	if len(icaos) == 0 {
+		return make(map[string]string), nil
+	}
+
+	query := "SELECT icao, value FROM operator_log WHERE icao IN (?" + strings.Repeat(",?", len(icaos)-1) + ")"
+	args := make([]interface{}, len(icaos))
+	for i, icao := range icaos {
+		args[i] = icao
+	}
+
+	rows, err := c.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	operators := make(map[string]string)
+	for rows.Next() {
+		var icao, jsonValue string
+		if err := rows.Scan(&icao, &jsonValue); err != nil {
+			return nil, err
+		}
+		operators[icao] = jsonValue
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return operators, nil
 }

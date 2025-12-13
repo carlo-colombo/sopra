@@ -20,7 +20,6 @@ type FlightInfo struct {
 	Operator                      string        `json:"operator"`
 	OperatorIcao                  string        `json:"operator_icao"`
 	OperatorIata                  string        `json:"operator_iata"`
-	OperatorInfo                  OperatorInfo  `json:"operator_info"`
 	FlightNumber                  string        `json:"flight_number"`
 	Registration                  string        `json:"registration"`
 	AtcIdent                      *string       `json:"atc_ident"`

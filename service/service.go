@@ -94,11 +94,9 @@ func (s *Service) GetFlightsInRadius(lat, lon, radius float64) ([]model.FlightIn
 			flightInfo.Latitude = flight.Latitude
 			flightInfo.Longitude = flight.Longitude
 			if flightInfo.OperatorIcao != "" {
-				operatorInfo, err := s.getOperatorInfo(flightInfo.OperatorIcao)
+				_, err := s.getOperatorInfo(flightInfo.OperatorIcao)
 				if err != nil {
 					log.Printf("Could not get operator info for ICAO %s: %v", flightInfo.OperatorIcao, err)
-				} else {
-					flightInfo.OperatorInfo = *operatorInfo
 				}
 			}
 			enrichedFlights = append(enrichedFlights, *flightInfo)
