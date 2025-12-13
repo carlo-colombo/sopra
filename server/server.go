@@ -17,6 +17,9 @@ import (
 //go:embed statics/index.html
 var indexHTML string
 
+//go:embed statics/flight_table.html
+var flightTableHTML string
+
 // FlightService defines the interface for the flight service.
 type FlightService interface {
 	GetFlightsInRadius(lat, lon, radius float64) ([]model.FlightInfo, error)
@@ -41,6 +44,11 @@ func NewServer(s FlightService, cfg *config.Config, db *database.DB) *Server {
 	tmpl, err := template.New("index").Funcs(funcMap).Parse(indexHTML)
 	if err != nil {
 		log.Fatalf("failed to parse template: %v", err)
+	}
+
+	_, err = tmpl.Parse(flightTableHTML)
+	if err != nil {
+		log.Fatalf("failed to parse flight_table template: %v", err)
 	}
 	return &Server{
 		service:  s,
@@ -230,13 +238,25 @@ func (s *Server) getStatsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		LastFlight        *FlightData
-		Last10Flights     []FlightData
-		MostCommonFlights []MostCommonFlightData
+		LastFlight        interface{}
+		Last10Flights     interface{}
+		MostCommonFlights interface{}
 	}{
-		LastFlight:        lastFlightData,
-		Last10Flights:     last10FlightsData,
-		MostCommonFlights: mostCommonFlightsData,
+		LastFlight: map[string]interface{}{
+			"Flights": []FlightData{*lastFlightData},
+			"Header":  "Last Seen",
+			"Class":   "last-flight",
+		},
+		Last10Flights: map[string]interface{}{
+			"Flights": last10FlightsData,
+			"Header":  "Last Seen",
+			"Class":   "last-10-flights",
+		},
+		MostCommonFlights: map[string]interface{}{
+			"Flights": mostCommonFlightsData,
+			"Header":  "Count",
+			"Class":   "most-common-flights",
+		},
 	}
 
 	if err := s.template.Execute(w, data); err != nil {

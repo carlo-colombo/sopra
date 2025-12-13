@@ -1,0 +1,24 @@
+{{define "flight_table"}}
+<table class="{{.Class}}">
+    <thead>
+        <tr>
+            <th>Flight</th>
+            <th>Operator</th>
+            <th>Destination</th>
+            <th>Origin</th>
+            <th>{{.Header}}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .Flights}}
+        <tr>
+            <td>{{.Ident}}</td>
+            <td>{{if .Operator.Shortname}}{{.Operator.Shortname}}{{else}}{{.OperatorIcao}}{{end}} ({{.Operator.Country}})</td>
+            <td>{{.Destination.City}} ({{.Destination.Code}})</td>
+            <td>{{.Origin.City}} ({{.Origin.Code}})</td>
+            <td>{{if eq $.Header "Last Seen"}}{{formatTime .LastSeen}}{{else}}{{.IdentificationCount}}{{end}}</td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+{{end}}

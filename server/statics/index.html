@@ -77,81 +77,21 @@
 
         <h2>Last Flight Seen</h2>
         {{if .LastFlight}}
-            <table class="last-flight">
-                <thead>
-                    <tr>
-                        <th>Flight</th>
-                        <th>Operator</th>
-                        <th>Destination</th>
-                        <th>Origin</th>
-                        <th>Last Seen</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>{{.LastFlight.Ident}}</td>
-                        <td>{{.LastFlight.Operator.Shortname}} ({{.LastFlight.Operator.Country}})</td>
-                        <td>{{.LastFlight.Destination.City}} ({{.LastFlight.Destination.Code}})</td>
-                        <td>{{.LastFlight.Origin.City}} ({{.LastFlight.Origin.Code}})</td>
-                        <td>{{ formatTime .LastFlight.LastSeen }}</td>
-                    </tr>
-                </tbody>
-            </table>
+            {{template "flight_table" .LastFlight}}
         {{else}}
             <p>No flights seen yet.</p>
         {{end}}
+
         <h2>Last 10 Flights Seen</h2>
         {{if .Last10Flights}}
-            <table class="last-10-flights">
-                <thead>
-                    <tr>
-                        <th>Flight</th>
-                        <th>Operator</th>
-                        <th>Destination</th>
-                        <th>Origin</th>
-                        <th>Last Seen</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{range .Last10Flights}}
-                    <tr>
-                        <td>{{.Ident}}</td>
-                        <td>{{.Operator.Shortname}} ({{.Operator.Country}})</td>
-                        <td>{{.Destination.City}} ({{.Destination.Code}})</td>
-                        <td>{{.Origin.City}} ({{.Origin.Code}})</td>
-                        <td>{{ formatTime .LastSeen }}</td>
-                    </tr>
-                    {{end}}
-                </tbody>
-            </table>
+            {{template "flight_table" .Last10Flights}}
         {{else}}
             <p>No flights seen yet.</p>
         {{end}}
 
         <h2>5 Most Common Flights</h2>
         {{if .MostCommonFlights}}
-            <table class="most-common-flights">
-                <thead>
-                    <tr>
-                        <th>Flight</th>
-                        <th>Operator</th>
-                        <th>Destination</th>
-                        <th>Origin</th>
-                        <th>Count</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{range .MostCommonFlights}}
-                    <tr>
-                        <td>{{.Ident}}</td>
-                        <td>{{.Operator.Shortname}} ({{.Operator.Country}})</td>
-                        <td>{{.Destination.City}} ({{.Destination.Code}})</td>
-                        <td>{{.Origin.City}} ({{.Origin.Code}})</td>
-                        <td>{{.IdentificationCount}}</td>
-                    </tr>
-                    {{end}}
-                </tbody>
-            </table>
+            {{template "flight_table" .MostCommonFlights}}
         {{else}}
             <p>No flights seen yet.</p>
         {{end}}
