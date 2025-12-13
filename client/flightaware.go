@@ -81,3 +81,38 @@ func (c *FlightAwareClient) GetFlightInfo(ident string) (*model.FlightInfo, erro
 
 	return nil, nil // No flight info in the response
 }
+
+// GetOperator retrieves operator information from FlightAware AeroAPI by its ICAO code.
+func (c *FlightAwareClient) GetOperator(icao string) (string, error) {
+	url := fmt.Sprintf("%s/operators/%s", c.baseURL, icao)
+	log.Printf("Requesting operator info from FlightAware API: %s\n", url)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Add("x-apikey", c.apiKey)
+	req.Header.Add("Accept", "application/json; charset=UTF-8")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to make request to FlightAware API: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return "", nil // No operator found for the given ICAO, not an error
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("FlightAware API returned non-OK status: %s", resp.Status)
+	}
+
+	var raw json.RawMessage
+	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
+		return "", fmt.Errorf("failed to decode FlightAware API response: %w", err)
+	}
+
+	return string(raw), nil
+}

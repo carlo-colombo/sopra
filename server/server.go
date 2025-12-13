@@ -86,7 +86,7 @@ func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
 		AirplaneModel   string    `json:"airplane_model"`
 	}{
 		Flight:          flight.Ident,
-		Operator:        flight.Operator,
+		Operator:        flight.OperatorInfo.Shortname,
 		DestinationCity: flight.Destination.City,
 		DestinationCode: flight.Destination.Code,
 		SourceCity:      flight.Origin.City,
@@ -184,7 +184,7 @@ func (s *Server) getAllFlightsHandler(w http.ResponseWriter, r *http.Request) {
 	for i, flight := range flights {
 		response := FlightResponse{
 			Flight:          flight.Ident,
-			Operator:        flight.Operator,
+			Operator:        flight.OperatorInfo.Shortname,
 			DestinationCity: flight.Destination.City,
 			DestinationCode: flight.Destination.Code,
 			SourceCity:      flight.Origin.City,

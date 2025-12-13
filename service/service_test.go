@@ -53,6 +53,11 @@ func (m *MockFlightAwareClient) GetFlightInfo(ident string) (*model.FlightInfo, 
 	return args.Get(0).(*model.FlightInfo), args.Error(1)
 }
 
+func (m *MockFlightAwareClient) GetOperator(icao string) (string, error) {
+	args := m.Called(icao)
+	return args.String(0), args.Error(1)
+}
+
 func TestGetFlightsInRadius(t *testing.T) {
 	// Arrange
 	mockOpenSkyClient := new(MockOpenSkyClient)
@@ -79,15 +84,17 @@ func TestGetFlightsInRadius(t *testing.T) {
 	// Mock FlightAware client to return flight info for UAL123
 	flightAwareInfo := &model.FlightInfo{
 		Ident:        "UAL123",
-		Operator:     "United Airlines",
+		OperatorIcao: "UAL",
 		AircraftType: "B738",
 		Origin:       model.AirportDetail{Code: "KORD"},
 		Destination:  model.AirportDetail{Code: "KLAX"},
 		Status:       "En Route",
-		// ScheduledOut: &now, // Removed to avoid time-dependent issues
 	}
 	mockFlightAwareClient.On("GetFlightInfo", "UAL123").Return(flightAwareInfo, nil)
-	// mockFlightAwareClient.On("GetFlightInfo", "").Return(nil, nil).Maybe() // Removed .Maybe()
+
+	// Mock GetOperator call
+	operatorInfoJSON := `{"name": "United Airlines", "shortname": "united"}`
+	mockFlightAwareClient.On("GetOperator", "UAL").Return(operatorInfoJSON, nil)
 
 	cfg := &config.Config{} // Dummy config
 	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db, cfg) // Pass db
@@ -102,7 +109,7 @@ func TestGetFlightsInRadius(t *testing.T) {
 
 	// Check the enriched flight details
 	assert.Equal(t, flightAwareInfo.Ident, flights[0].Ident)
-	assert.Equal(t, flightAwareInfo.Operator, flights[0].Operator)
+	assert.Equal(t, "United", flights[0].OperatorInfo.Shortname)
 	assert.Equal(t, flightAwareInfo.Origin.Code, flights[0].Origin.Code)
 	assert.Equal(t, flightAwareInfo.Destination.Code, flights[0].Destination.Code)
 

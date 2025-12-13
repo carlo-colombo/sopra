@@ -229,3 +229,28 @@ func (c *DB) ClearFlightLog() error {
 	_, err := c.db.Exec("DELETE FROM flight_log")
 	return err
 }
+
+// LogOperator stores an operator's JSON data in the cache.
+func (c *DB) LogOperator(icao string, jsonValue string) error {
+	_, err := c.db.Exec("INSERT INTO operator_log (icao, value) VALUES (?, ?) ON CONFLICT(icao) DO NOTHING", icao, jsonValue)
+	if err != nil {
+		log.Printf("Error logging operator for icao: %s: %v\n", icao, err)
+		return err
+	}
+	log.Printf("Logged operator for icao: %s\n", icao)
+	return nil
+}
+
+// GetOperator retrieves a cached operator's JSON data by ICAO.
+func (c *DB) GetOperator(icao string) (string, error) {
+	var jsonValue string
+	err := c.db.QueryRow("SELECT value FROM operator_log WHERE icao = ?", icao).Scan(&jsonValue)
+	if err == sql.ErrNoRows {
+		return "", nil // Cache miss
+	}
+	if err != nil {
+		return "", err
+	}
+	log.Printf("Cache hit for operator icao: %s\n", icao)
+	return jsonValue, nil
+}

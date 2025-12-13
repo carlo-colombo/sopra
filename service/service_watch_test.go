@@ -45,6 +45,10 @@ func (m *MockFlightAwareClient) GetFlightInfo(ident string) (*model.FlightInfo, 
 	return m.FlightToReturn, m.ErrToReturn
 }
 
+func (m *MockFlightAwareClient) GetOperator(icao string) (string, error) {
+	return "", nil
+}
+
 // Ensure that logging doesn't print during tests
 func TestMain(m *testing.M) {
 	log.SetOutput(os.Stderr) // Or os.Stdout, or ioutil.Discard

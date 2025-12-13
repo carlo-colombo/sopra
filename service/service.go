@@ -1,12 +1,15 @@
 package service
 
 import (
+	"encoding/json"
 	"log"
 	"time"
 
 	"github.com/carlo-colombo/sopra/config"
 	"github.com/carlo-colombo/sopra/database"
 	"github.com/carlo-colombo/sopra/model"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // OpenSkyAPIClient defines the interface for the OpenSky API client.
@@ -17,6 +20,7 @@ type OpenSkyAPIClient interface {
 // FlightAwareAPIClient defines the interface for the FlightAware AeroAPI client.
 type FlightAwareAPIClient interface {
 	GetFlightInfo(ident string) (*model.FlightInfo, error)
+	GetOperator(icao string) (string, error)
 }
 
 // Service is the main service for the application.
@@ -89,13 +93,51 @@ func (s *Service) GetFlightsInRadius(lat, lon, radius float64) ([]model.FlightIn
 		if flightInfo != nil {
 			flightInfo.Latitude = flight.Latitude
 			flightInfo.Longitude = flight.Longitude
+			if flightInfo.OperatorIcao != "" {
+				operatorInfo, err := s.getOperatorInfo(flightInfo.OperatorIcao)
+				if err != nil {
+					log.Printf("Could not get operator info for ICAO %s: %v", flightInfo.OperatorIcao, err)
+				} else {
+					flightInfo.OperatorInfo = *operatorInfo
+				}
+			}
 			enrichedFlights = append(enrichedFlights, *flightInfo)
 		}
-
 	}
-
 	return enrichedFlights, nil
+}
 
+func (s *Service) getOperatorInfo(icao string) (*model.OperatorInfo, error) {
+	cachedOperator, err := s.db.GetOperator(icao)
+	if err != nil {
+		return nil, err
+	}
+	if cachedOperator != "" {
+		var operatorInfo model.OperatorInfo
+		if err := json.Unmarshal([]byte(cachedOperator), &operatorInfo); err != nil {
+			return nil, err
+		}
+		caser := cases.Title(language.English)
+		operatorInfo.Shortname = caser.String(operatorInfo.Shortname)
+		return &operatorInfo, nil
+	}
+	operatorJSON, err := s.flightawareClient.GetOperator(icao)
+	if err != nil {
+		return nil, err
+	}
+	if operatorJSON == "" {
+		return nil, nil
+	}
+	if err := s.db.LogOperator(icao, operatorJSON); err != nil {
+		log.Printf("Failed to cache operator info for ICAO %s: %v", icao, err)
+	}
+	var operatorInfo model.OperatorInfo
+	if err := json.Unmarshal([]byte(operatorJSON), &operatorInfo); err != nil {
+		return nil, err
+	}
+	caser := cases.Title(language.English)
+	operatorInfo.Shortname = caser.String(operatorInfo.Shortname)
+	return &operatorInfo, nil
 }
 
 // LogFlights logs a slice of flights to the database.
