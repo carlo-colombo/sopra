@@ -104,6 +104,16 @@ func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	destinationCode := flight.Destination.Code
+	if flight.Destination.CodeIata != "" {
+		destinationCode = flight.Destination.CodeIata
+	}
+
+	originCode := flight.Origin.Code
+	if flight.Origin.CodeIata != "" {
+		originCode = flight.Origin.CodeIata
+	}
+
 	response := struct {
 		Flight          string    `json:"flight"`
 		Operator        string    `json:"operator"`
@@ -117,9 +127,9 @@ func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
 		Flight:          flight.Ident,
 		Operator:        operator.Shortname,
 		DestinationCity: flight.Destination.City,
-		DestinationCode: flight.Destination.Code,
+		DestinationCode: destinationCode,
 		SourceCity:      flight.Origin.City,
-		SourceCode:      flight.Origin.Code,
+		SourceCode:      originCode,
 		LastTimeSeen:    lastSeen,
 		AirplaneModel:   flight.AircraftType,
 	}
@@ -315,13 +325,22 @@ func (s *Server) getAllFlightsHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			operator.Shortname = "N/A"
 		}
+		destinationCode := flight.Destination.Code
+		if flight.Destination.CodeIata != "" {
+			destinationCode = flight.Destination.CodeIata
+		}
+
+		originCode := flight.Origin.Code
+		if flight.Origin.CodeIata != "" {
+			originCode = flight.Origin.CodeIata
+		}
 		response := FlightResponse{
 			Flight:          flight.Ident,
 			Operator:        operator.Shortname,
 			DestinationCity: flight.Destination.City,
-			DestinationCode: flight.Destination.Code,
+			DestinationCode: destinationCode,
 			SourceCity:      flight.Origin.City,
-			SourceCode:      flight.Origin.Code,
+			SourceCode:      originCode,
 			LastTimeSeen:    lastSeens[i],
 			AirplaneModel:   flight.AircraftType,
 		}
