@@ -80,7 +80,9 @@ func TestGetFlightsHandler(t *testing.T) {
 func TestGetAllFlightsHandler(t *testing.T) {
 	// Create a new in-memory database for testing
 	db := newTestDB(t)
-	db.ClearFlightLog()
+	if err := db.ClearFlightLog(); err != nil {
+		t.Fatalf("failed to clear flight log: %v", err)
+	}
 
 	// Log some dummy flight data
 	flight1 := &model.FlightInfo{
@@ -109,8 +111,12 @@ func TestGetAllFlightsHandler(t *testing.T) {
 		},
 		AircraftType: "A320",
 	}
-	db.LogFlight("FL001", flight1)
-	db.LogFlight("FL002", flight2)
+	if err := db.LogFlight("FL001", flight1); err != nil {
+		t.Fatalf("failed to log flight FL001: %v", err)
+	}
+	if err := db.LogFlight("FL002", flight2); err != nil {
+		t.Fatalf("failed to log flight FL002: %v", err)
+	}
 
 	// Create a new server with the test database
 	cfg := &config.Config{}
@@ -138,7 +144,6 @@ func TestGetAllFlightsHandler(t *testing.T) {
 	assert.Equal(t, "FL002", actualFlights[0]["flight"])
 	assert.Equal(t, "FL001", actualFlights[1]["flight"])
 }
-
 func TestGetStatsHandler(t *testing.T) {
 	// Create a new in-memory database for testing
 	db := newTestDB(t)
@@ -170,8 +175,12 @@ func TestGetStatsHandler(t *testing.T) {
 		},
 		AircraftType: "A320",
 	}
-	db.LogFlight("FL001", flight1)
-	db.LogFlight("FL002", flight2)
+	if err := db.LogFlight("FL001", flight1); err != nil {
+		t.Fatalf("failed to log flight FL001: %v", err)
+	}
+	if err := db.LogFlight("FL002", flight2); err != nil {
+		t.Fatalf("failed to log flight FL002: %v", err)
+	}
 
 	// Create a new server with the test database
 	cfg := &config.Config{}

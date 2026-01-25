@@ -105,23 +105,27 @@ func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := struct {
-		Flight          string    `json:"flight"`
-		Operator        string    `json:"operator"`
-		DestinationCity string    `json:"destination_city"`
-		DestinationCode string    `json:"destination_code_iata"`
-		SourceCity      string    `json:"source_city"`
-		SourceCode      string    `json:"source_code_iata"`
-		LastTimeSeen    time.Time `json:"last_time_seen"`
-		AirplaneModel   string    `json:"airplane_model"`
+		Flight              string    `json:"flight"`
+		Operator            string    `json:"operator"`
+		DestinationCity     string    `json:"destination_city"`
+		DestinationCodeIata string    `json:"destination_code_iata"`
+		DestinationCodeIcao string    `json:"destination_code_icao"`
+		SourceCity          string    `json:"source_city"`
+		SourceCodeIata      string    `json:"source_code_iata"`
+		SourceCodeIcao      string    `json:"source_code_icao"`
+		LastTimeSeen        time.Time `json:"last_time_seen"`
+		AirplaneModel       string    `json:"airplane_model"`
 	}{
-		Flight:          flight.Ident,
-		Operator:        operator.Shortname,
-		DestinationCity: flight.Destination.City,
-		DestinationCode: flight.Destination.Code,
-		SourceCity:      flight.Origin.City,
-		SourceCode:      flight.Origin.Code,
-		LastTimeSeen:    lastSeen,
-		AirplaneModel:   flight.AircraftType,
+		Flight:              flight.Ident,
+		Operator:            operator.Shortname,
+		DestinationCity:     flight.Destination.City,
+		DestinationCodeIata: flight.Destination.CodeIata,
+		DestinationCodeIcao: flight.Destination.CodeIcao,
+		SourceCity:          flight.Origin.City,
+		SourceCodeIata:      flight.Origin.CodeIata,
+		SourceCodeIcao:      flight.Origin.CodeIcao,
+		LastTimeSeen:        lastSeen,
+		AirplaneModel:       flight.AircraftType,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -294,14 +298,16 @@ func (s *Server) getAllFlightsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type FlightResponse struct {
-		Flight          string    `json:"flight"`
-		Operator        string    `json:"operator"`
-		DestinationCity string    `json:"destination_city"`
-		DestinationCode string    `json:"destination_code_iata"`
-		SourceCity      string    `json:"source_city"`
-		SourceCode      string    `json:"source_code_iata"`
-		LastTimeSeen    time.Time `json:"last_time_seen"`
-		AirplaneModel   string    `json:"airplane_model"`
+		Flight              string    `json:"flight"`
+		Operator            string    `json:"operator"`
+		DestinationCity     string    `json:"destination_city"`
+		DestinationCodeIata string    `json:"destination_code_iata"`
+		DestinationCodeIcao string    `json:"destination_code_icao"`
+		SourceCity          string    `json:"source_city"`
+		SourceCodeIata      string    `json:"source_code_iata"`
+		SourceCodeIcao      string    `json:"source_code_icao"`
+		LastTimeSeen        time.Time `json:"last_time_seen"`
+		AirplaneModel       string    `json:"airplane_model"`
 	}
 
 	var responses []FlightResponse
@@ -316,14 +322,16 @@ func (s *Server) getAllFlightsHandler(w http.ResponseWriter, r *http.Request) {
 			operator.Shortname = "N/A"
 		}
 		response := FlightResponse{
-			Flight:          flight.Ident,
-			Operator:        operator.Shortname,
-			DestinationCity: flight.Destination.City,
-			DestinationCode: flight.Destination.CodeIata,
-			SourceCity:      flight.Origin.City,
-			SourceCode:      flight.Origin.CodeIata,
-			LastTimeSeen:    lastSeens[i],
-			AirplaneModel:   flight.AircraftType,
+			Flight:              flight.Ident,
+			Operator:            operator.Shortname,
+			DestinationCity:     flight.Destination.City,
+			DestinationCodeIata: flight.Destination.CodeIata,
+			DestinationCodeIcao: flight.Destination.CodeIcao,
+			SourceCity:          flight.Origin.City,
+			SourceCodeIata:      flight.Origin.CodeIata,
+			SourceCodeIcao:      flight.Origin.CodeIcao,
+			LastTimeSeen:        lastSeens[i],
+			AirplaneModel:       flight.AircraftType,
 		}
 		responses = append(responses, response)
 	}

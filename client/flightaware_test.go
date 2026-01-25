@@ -90,7 +90,9 @@ func TestGetFlightInfo_Success(t *testing.T) {
 			t.Errorf("Expected API key header 'test_api_key', got '%s'", r.Header.Get("x-apikey"))
 		}
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(mockResponse)
+		if err := json.NewEncoder(w).Encode(mockResponse); err != nil {
+			t.Fatalf("failed to encode mock response: %v", err)
+		}
 	}))
 	defer server.Close()
 
@@ -138,7 +140,9 @@ func TestGetFlightInfo_Cache(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		serverHitCount++
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(mockResponse)
+		if err := json.NewEncoder(w).Encode(mockResponse); err != nil {
+			t.Fatalf("failed to encode mock response: %v", err)
+		}
 	}))
 	defer server.Close()
 
@@ -250,7 +254,9 @@ func TestGetFlightInfo_NoFlightsInResponse(t *testing.T) {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(mockResponse)
+		if err := json.NewEncoder(w).Encode(mockResponse); err != nil {
+			t.Fatalf("failed to encode mock response: %v", err)
+		}
 	}))
 	defer server.Close()
 

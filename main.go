@@ -3,15 +3,16 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"os"
+	"time"
+
 	"github.com/carlo-colombo/sopra/client"
 	"github.com/carlo-colombo/sopra/config"
 	"github.com/carlo-colombo/sopra/database"
 	"github.com/carlo-colombo/sopra/server"
 	"github.com/carlo-colombo/sopra/service"
 	"github.com/spf13/pflag"
-	"log"
-	"os"
-	"time"
 )
 
 func main() {

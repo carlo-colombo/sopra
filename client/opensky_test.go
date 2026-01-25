@@ -24,7 +24,9 @@ func TestGetStates(t *testing.T) {
 				{"icao24", "callsign", "origin_country", 1.0, 1.0, 1.0, 1.0, 1.0, true, 1.0, 1.0, 1.0, nil, 1.0, nil, false, 0},
 			},
 		}
-		json.NewEncoder(w).Encode(states)
+		if err := json.NewEncoder(w).Encode(states); err != nil {
+			t.Fatalf("failed to encode mock response: %v", err)
+		}
 	}))
 	defer server.Close()
 
@@ -55,7 +57,9 @@ func TestGetStatesWithBoundingBox(t *testing.T) {
 				{"icao24", "callsign", "origin_country", 1.0, 1.0, 1.0, 1.0, 1.0, true, 1.0, 1.0, 1.0, nil, 1.0, nil, false, 0},
 			},
 		}
-		json.NewEncoder(w).Encode(states)
+		if err := json.NewEncoder(w).Encode(states); err != nil {
+			t.Fatalf("failed to encode mock response: %v", err)
+		}
 	}))
 	defer server.Close()
 
@@ -89,7 +93,9 @@ func TestGetStatesInRadius(t *testing.T) {
 				{"icao24_2", "CALL2", "country2", 1.0, 1.0, 1.0, 1.0, 1.0, false, 1.0, 1.0, 1.0, nil, 1.0, nil, false, 0, "", ""},
 			},
 		}
-		json.NewEncoder(w).Encode(states)
+		if err := json.NewEncoder(w).Encode(states); err != nil {
+			t.Fatalf("failed to encode mock response: %v", err)
+		}
 	}))
 	defer server.Close()
 
@@ -123,7 +129,9 @@ func TestCallsignTrimming(t *testing.T) {
 				{"icao24_trim", "  SPACEYCALL  ", "country_trim", 1.0, 1.0, 0.1, 0.1, 1.0, false, 1.0, 1.0, 1.0, nil, 1.0, nil, false, 0, "", ""},
 			},
 		}
-		json.NewEncoder(w).Encode(states)
+		if err := json.NewEncoder(w).Encode(states); err != nil {
+			t.Fatalf("failed to encode mock response: %v", err)
+		}
 	}))
 	defer server.Close()
 

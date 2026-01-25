@@ -81,9 +81,7 @@ func (s *States) ToFlights() []Flight {
 		if len(state) > 11 {
 			flight.VerticalRate, _ = state[11].(float64)
 		}
-		if len(state) > 12 {
-			// Sensors are not handled in this example
-		}
+
 		if len(state) > 13 {
 			flight.GeoAltitude, _ = state[13].(float64)
 		}

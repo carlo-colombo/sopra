@@ -96,7 +96,7 @@ func TestGetFlightsInRadius(t *testing.T) {
 	operatorInfoJSON := `{"name": "United Airlines", "shortname": "united"}`
 	mockFlightAwareClient.On("GetOperator", "UAL").Return(operatorInfoJSON, nil)
 
-	cfg := &config.Config{} // Dummy config
+	cfg := &config.Config{}                                                  // Dummy config
 	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db, cfg) // Pass db
 
 	// Act

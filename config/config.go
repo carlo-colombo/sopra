@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
@@ -37,21 +39,41 @@ func LoadConfig(path string) (*Config, error) {
 
 	// Bind environment variables
 
-	viper.BindPFlag("print", pflag.Lookup("print"))
-	viper.BindPFlag("watch", pflag.Lookup("watch"))
-	viper.BindPFlag("interval", pflag.Lookup("interval"))
-	viper.BindEnv("port", "PORT")
+	_ = viper.BindPFlag("print", pflag.Lookup("print"))
+	_ = viper.BindPFlag("watch", pflag.Lookup("watch"))
+	_ = viper.BindPFlag("interval", pflag.Lookup("interval"))
+	if err := viper.BindEnv("port", "PORT"); err != nil {
+		log.Fatalf("failed to bind 'port' env: %v", err)
+	}
 
-	viper.BindEnv("opensky_client.id", "OPENSKY_CLIENT_ID")
+	if err := viper.BindEnv("opensky_client.id", "OPENSKY_CLIENT_ID"); err != nil {
+		log.Fatalf("failed to bind 'opensky_client.id' env: %v", err)
+	}
 
-	viper.BindEnv("opensky_client.secret", "OPENSKY_CLIENT_SECRET")
-	viper.BindEnv("flightaware.api_key", "FLIGHTAWARE_API_KEY")
-	viper.BindEnv("service.latitude", "DEFAULT_LATITUDE")
-	viper.BindEnv("service.longitude", "DEFAULT_LONGITUDE")
-	viper.BindEnv("service.radius", "DEFAULT_RADIUS")
-	viper.BindEnv("watch", "WATCH")
-	viper.BindEnv("interval", "WATCH_INTERVAL")
-	viper.BindEnv("db_path", "DB_PATH")
+	if err := viper.BindEnv("opensky_client.secret", "OPENSKY_CLIENT_SECRET"); err != nil {
+		log.Fatalf("failed to bind 'opensky_client.secret' env: %v", err)
+	}
+	if err := viper.BindEnv("flightaware.api_key", "FLIGHTAWARE_API_KEY"); err != nil {
+		log.Fatalf("failed to bind 'flightaware.api_key' env: %v", err)
+	}
+	if err := viper.BindEnv("service.latitude", "DEFAULT_LATITUDE"); err != nil {
+		log.Fatalf("failed to bind 'service.latitude' env: %v", err)
+	}
+	if err := viper.BindEnv("service.longitude", "DEFAULT_LONGITUDE"); err != nil {
+		log.Fatalf("failed to bind 'service.longitude' env: %v", err)
+	}
+	if err := viper.BindEnv("service.radius", "DEFAULT_RADIUS"); err != nil {
+		log.Fatalf("failed to bind 'service.radius' env: %v", err)
+	}
+	if err := viper.BindEnv("watch", "WATCH"); err != nil {
+		log.Fatalf("failed to bind 'watch' env: %v", err)
+	}
+	if err := viper.BindEnv("interval", "WATCH_INTERVAL"); err != nil {
+		log.Fatalf("failed to bind 'interval' env: %v", err)
+	}
+	if err := viper.BindEnv("db_path", "DB_PATH"); err != nil {
+		log.Fatalf("failed to bind 'db_path' env: %v", err)
+	}
 
 	// Set default values
 

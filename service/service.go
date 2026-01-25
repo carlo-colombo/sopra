@@ -62,15 +62,13 @@ func (s *Service) GetFlightsInRadius(lat, lon, radius float64) ([]model.FlightIn
 
 	openskyFlights, err := s.openskyClient.GetStatesInRadius(lat, lon, radius)
 
-		if err != nil {
+	if err != nil {
 
-			return nil, err
+		return nil, err
 
-		}
+	}
 
-	
-
-		var enrichedFlights []model.FlightInfo
+	var enrichedFlights []model.FlightInfo
 
 	for _, flight := range openskyFlights {
 
@@ -142,17 +140,17 @@ func (s *Service) getOperatorInfo(icao string) (*model.OperatorInfo, error) {
 
 func (s *Service) LogFlights(flights []model.FlightInfo) {
 
-		for _, flight := range flights { // Changed back to use flight
+	for _, flight := range flights { // Changed back to use flight
 
-			err := s.db.LogFlight(flight.Ident, &flight)
+		err := s.db.LogFlight(flight.Ident, &flight)
 
-			if err != nil {
+		if err != nil {
 
-				log.Printf("Error logging flight %s: %v", flight.Ident, err)
-
-			}
+			log.Printf("Error logging flight %s: %v", flight.Ident, err)
 
 		}
+
+	}
 
 }
 

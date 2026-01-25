@@ -2,7 +2,7 @@ package model
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"os"
 	"testing"
 )
@@ -15,7 +15,7 @@ func TestFlightAwareResponseDeserialization(t *testing.T) {
 	}
 	defer jsonFile.Close()
 
-	byteValue, err := ioutil.ReadAll(jsonFile)
+	byteValue, err := io.ReadAll(jsonFile)
 	if err != nil {
 		t.Fatalf("Failed to read JSON file: %v", err)
 	}

@@ -14,8 +14,8 @@
         <tr>
             <td>{{.Ident}}</td>
             <td>{{if .Operator.Shortname}}{{.Operator.Shortname}}{{else}}{{.OperatorIcao}}{{end}} ({{.Operator.Country}})</td>
-            <td>{{.Destination.City}} ({{.Destination.Code}})</td>
-            <td>{{.Origin.City}} ({{.Origin.Code}})</td>
+            <td>{{.Destination.City}} ({{.Destination.CodeIata}})</td>
+            <td>{{.Origin.City}} ({{.Origin.CodeIata}})</td>
             <td>{{if eq $.Header "Last Seen"}}{{formatTime .LastSeen}}{{else}}{{.IdentificationCount}}{{end}}</td>
         </tr>
         {{end}}
