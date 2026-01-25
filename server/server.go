@@ -319,9 +319,9 @@ func (s *Server) getAllFlightsHandler(w http.ResponseWriter, r *http.Request) {
 			Flight:          flight.Ident,
 			Operator:        operator.Shortname,
 			DestinationCity: flight.Destination.City,
-			DestinationCode: flight.Destination.Code,
+			DestinationCode: flight.Destination.CodeIata,
 			SourceCity:      flight.Origin.City,
-			SourceCode:      flight.Origin.Code,
+			SourceCode:      flight.Origin.CodeIata,
 			LastTimeSeen:    lastSeens[i],
 			AirplaneModel:   flight.AircraftType,
 		}
