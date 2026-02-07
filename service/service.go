@@ -7,6 +7,7 @@ import (
 
 	"github.com/carlo-colombo/sopra/config"
 	"github.com/carlo-colombo/sopra/database"
+	"github.com/carlo-colombo/sopra/haversine"
 	"github.com/carlo-colombo/sopra/model"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -91,6 +92,7 @@ func (s *Service) GetFlightsInRadius(lat, lon, radius float64) ([]model.FlightIn
 		if flightInfo != nil {
 			flightInfo.Latitude = flight.Latitude
 			flightInfo.Longitude = flight.Longitude
+			flightInfo.Distance = haversine.Distance(lat, lon, flight.Latitude, flight.Longitude) * 1000
 			if flightInfo.OperatorIcao != "" {
 				_, err := s.getOperatorInfo(flightInfo.OperatorIcao)
 				if err != nil {

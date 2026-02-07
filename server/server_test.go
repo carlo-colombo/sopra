@@ -97,6 +97,7 @@ func TestGetAllFlightsHandler(t *testing.T) {
 			Code: "TSB",
 		},
 		AircraftType: "B737",
+		Distance:     1234.5,
 	}
 	flight2 := &model.FlightInfo{
 		Ident:    "FL002",
@@ -110,6 +111,7 @@ func TestGetAllFlightsHandler(t *testing.T) {
 			Code: "TST",
 		},
 		AircraftType: "A320",
+		Distance:     5678.9,
 	}
 	if err := db.LogFlight("FL001", flight1); err != nil {
 		t.Fatalf("failed to log flight FL001: %v", err)
@@ -142,7 +144,9 @@ func TestGetAllFlightsHandler(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, actualFlights, 2)
 	assert.Equal(t, "FL002", actualFlights[0]["flight"])
+	assert.Equal(t, 5678.9, actualFlights[0]["distance_m"])
 	assert.Equal(t, "FL001", actualFlights[1]["flight"])
+	assert.Equal(t, 1234.5, actualFlights[1]["distance_m"])
 }
 func TestGetStatsHandler(t *testing.T) {
 	// Create a new in-memory database for testing
@@ -161,6 +165,7 @@ func TestGetStatsHandler(t *testing.T) {
 			Code: "TSB",
 		},
 		AircraftType: "B737",
+		Distance:     1234.5,
 	}
 	flight2 := &model.FlightInfo{
 		Ident:    "FL002",
@@ -174,6 +179,7 @@ func TestGetStatsHandler(t *testing.T) {
 			Code: "TST",
 		},
 		AircraftType: "A320",
+		Distance:     5678.9,
 	}
 	if err := db.LogFlight("FL001", flight1); err != nil {
 		t.Fatalf("failed to log flight FL001: %v", err)
