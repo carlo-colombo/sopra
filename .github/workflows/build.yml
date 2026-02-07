@@ -14,7 +14,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: 1.22
+        go-version: 1.24
     - name: Test
       run: go test ./...
 
@@ -29,3 +29,43 @@ jobs:
         uses: buildpacks/github-actions/setup-pack@v5.1.0
       - name: Build
         run: pack build sopra-server --builder gcr.io/buildpacks/builder:v1
+
+  demo:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24
+      - name: Build binary
+        run: go build -o sopra-server main.go
+      - name: Run server and capture HTML
+        run: |
+          mkdir dist
+          export OPENSKY_CLIENT_ID="dummy"
+          export OPENSKY_CLIENT_SECRET="dummy"
+          export FLIGHTAWARE_API_KEY="dummy"
+          export DB_PATH="sample/sopra.db"
+          ./sopra-server &
+          SERVER_PID=$!
+          sleep 5
+          curl -s http://localhost:8080 > dist/index.html
+          kill $SERVER_PID
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
