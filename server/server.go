@@ -243,10 +243,50 @@ func (s *Server) getStatsHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	topDestinations, err := s.db.GetTopDestinations()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	topSources, err := s.db.GetTopSources()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	type StatWithPerc struct {
+		model.AirportStat
+		Percentage float64
+	}
+
+	getStatsWithPerc := func(stats []model.AirportStat) []StatWithPerc {
+		max := 0
+		for _, s := range stats {
+			if s.Count > max {
+				max = s.Count
+			}
+		}
+		var res []StatWithPerc
+		for _, s := range stats {
+			perc := 0.0
+			if max > 0 {
+				perc = float64(s.Count) / float64(max) * 100
+			}
+			res = append(res, StatWithPerc{s, perc})
+		}
+		return res
+	}
+
+	destStats := getStatsWithPerc(topDestinations)
+	srcStats := getStatsWithPerc(topSources)
+
 	data := struct {
 		LastFlight        interface{}
 		Last10Flights     interface{}
 		MostCommonFlights interface{}
+		TopDestinations   []StatWithPerc
+		TopSources        []StatWithPerc
 	}{
 		LastFlight: map[string]interface{}{
 			"Flights": []FlightData{*lastFlightData},
@@ -263,6 +303,8 @@ func (s *Server) getStatsHandler(w http.ResponseWriter, r *http.Request) {
 			"Header":  "Count",
 			"Class":   "most-common-flights",
 		},
+		TopDestinations: destStats,
+		TopSources:      srcStats,
 	}
 
 	if err := s.template.Execute(w, data); err != nil {

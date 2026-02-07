@@ -89,12 +89,12 @@ func TestGetAllFlightsHandler(t *testing.T) {
 		Ident:    "FL001",
 		Operator: "TestAir",
 		Origin: model.AirportDetail{
-			City: "Testville",
-			Code: "TST",
+			City:     "Testville",
+			CodeIata: "TST",
 		},
 		Destination: model.AirportDetail{
-			City: "Testburg",
-			Code: "TSB",
+			City:     "Testburg",
+			CodeIata: "TSB",
 		},
 		AircraftType: "B737",
 		Distance:     1234.5,
@@ -103,12 +103,12 @@ func TestGetAllFlightsHandler(t *testing.T) {
 		Ident:    "FL002",
 		Operator: "TestAir",
 		Origin: model.AirportDetail{
-			City: "Testburg",
-			Code: "TSB",
+			City:     "Testburg",
+			CodeIata: "TSB",
 		},
 		Destination: model.AirportDetail{
-			City: "Testville",
-			Code: "TST",
+			City:     "Testville",
+			CodeIata: "TST",
 		},
 		AircraftType: "A320",
 		Distance:     5678.9,
@@ -157,12 +157,12 @@ func TestGetStatsHandler(t *testing.T) {
 		Ident:    "FL001",
 		Operator: "TestAir",
 		Origin: model.AirportDetail{
-			City: "Testville",
-			Code: "TST",
+			City:     "Testville",
+			CodeIata: "TST",
 		},
 		Destination: model.AirportDetail{
-			City: "Testburg",
-			Code: "TSB",
+			City:     "Testburg",
+			CodeIata: "TSB",
 		},
 		AircraftType: "B737",
 		Distance:     1234.5,
@@ -171,12 +171,12 @@ func TestGetStatsHandler(t *testing.T) {
 		Ident:    "FL002",
 		Operator: "TestAir",
 		Origin: model.AirportDetail{
-			City: "Testburg",
-			Code: "TSB",
+			City:     "Testburg",
+			CodeIata: "TSB",
 		},
 		Destination: model.AirportDetail{
-			City: "Testville",
-			Code: "TST",
+			City:     "Testville",
+			CodeIata: "TST",
 		},
 		AircraftType: "A320",
 		Distance:     5678.9,
@@ -214,4 +214,8 @@ func TestGetStatsHandler(t *testing.T) {
 	assert.Contains(t, body, "<h2>Last 10 Flights Seen</h2>")
 	assert.Contains(t, body, "<td>FL001</td>")
 	assert.Contains(t, body, "<h2>5 Most Common Flights</h2>")
+	assert.Contains(t, body, "<h2>Top 10 Destinations</h2>")
+	assert.Contains(t, body, "TSB (Testburg)")
+	assert.Contains(t, body, "<h2>Top 10 Sources</h2>")
+	assert.Contains(t, body, "TST (Testville)")
 }
