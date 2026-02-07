@@ -12,6 +12,7 @@ import (
 	"github.com/carlo-colombo/sopra/config"
 	"github.com/carlo-colombo/sopra/database"
 	"github.com/carlo-colombo/sopra/model"
+	"github.com/carlo-colombo/sopra/service"
 )
 
 //go:embed statics/index.html
@@ -116,6 +117,7 @@ func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
 		LastTimeSeen        time.Time `json:"last_time_seen"`
 		AirplaneModel       string    `json:"airplane_model"`
 		Distance            float64   `json:"distance_m"`
+		CO2KG               float64   `json:"co2_kg"`
 	}{
 		Flight:              flight.Ident,
 		Operator:            operator.Shortname,
@@ -128,6 +130,11 @@ func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
 		LastTimeSeen:        lastSeen,
 		AirplaneModel:       flight.AircraftType,
 		Distance:            flight.Distance,
+		CO2KG:               flight.CO2KG,
+	}
+
+	if response.CO2KG == 0 && flight.RouteDistance > 0 {
+		response.CO2KG = service.EstimateCO2(flight.AircraftType, flight.RouteDistance)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -196,6 +203,9 @@ func (s *Server) getStatsHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			operator.Shortname = "N/A"
 		}
+		if lastFlight.CO2KG == 0 && lastFlight.RouteDistance > 0 {
+			lastFlight.CO2KG = service.EstimateCO2(lastFlight.AircraftType, lastFlight.RouteDistance)
+		}
 		lastFlightData = &FlightData{
 			FlightInfo: lastFlight,
 			Operator:   &operator,
@@ -205,6 +215,9 @@ func (s *Server) getStatsHandler(w http.ResponseWriter, r *http.Request) {
 
 	var last10FlightsData []FlightData
 	for i, flight := range last10Flights {
+		if flight.CO2KG == 0 && flight.RouteDistance > 0 {
+			flight.CO2KG = service.EstimateCO2(flight.AircraftType, flight.RouteDistance)
+		}
 		var operator model.OperatorInfo
 		if opJSON, ok := operatorMap[flight.OperatorIcao]; ok {
 			if err := json.Unmarshal([]byte(opJSON), &operator); err != nil {
@@ -228,6 +241,9 @@ func (s *Server) getStatsHandler(w http.ResponseWriter, r *http.Request) {
 
 	var mostCommonFlightsData []MostCommonFlightData
 	for _, flight := range mostCommonFlights {
+		if flight.CO2KG == 0 && flight.RouteDistance > 0 {
+			flight.CO2KG = service.EstimateCO2(flight.AircraftType, flight.RouteDistance)
+		}
 		var operator model.OperatorInfo
 		if opJSON, ok := operatorMap[flight.OperatorIcao]; ok {
 			if err := json.Unmarshal([]byte(opJSON), &operator); err != nil {
@@ -353,10 +369,14 @@ func (s *Server) getAllFlightsHandler(w http.ResponseWriter, r *http.Request) {
 		LastTimeSeen        time.Time `json:"last_time_seen"`
 		AirplaneModel       string    `json:"airplane_model"`
 		Distance            float64   `json:"distance_m"`
+		CO2KG               float64   `json:"co2_kg"`
 	}
 
 	var responses []FlightResponse
 	for i, flight := range flights {
+		if flight.CO2KG == 0 && flight.RouteDistance > 0 {
+			flight.CO2KG = service.EstimateCO2(flight.AircraftType, flight.RouteDistance)
+		}
 		var operator model.OperatorInfo
 		if opJSON, ok := operatorMap[flight.OperatorIcao]; ok {
 			if err := json.Unmarshal([]byte(opJSON), &operator); err != nil {
@@ -378,6 +398,7 @@ func (s *Server) getAllFlightsHandler(w http.ResponseWriter, r *http.Request) {
 			LastTimeSeen:        lastSeens[i],
 			AirplaneModel:       flight.AircraftType,
 			Distance:            flight.Distance,
+			CO2KG:               flight.CO2KG,
 		}
 		responses = append(responses, response)
 	}
