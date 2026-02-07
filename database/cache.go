@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -294,4 +295,44 @@ func (c *DB) GetOperators(icaos []string) (map[string]string, error) {
 	}
 
 	return operators, nil
+}
+
+func (c *DB) getTopAirports(path string) ([]model.AirportStat, error) {
+	query := fmt.Sprintf(`
+		SELECT
+			value ->> '$.%s.code_iata' as iata,
+			value ->> '$.%s.city' as city,
+			SUM(identification_count) as total_count
+		FROM flight_log
+		WHERE value ->> '$.%s.code_iata' IS NOT NULL AND value ->> '$.%s.code_iata' != ''
+		GROUP BY iata, city
+		ORDER BY total_count DESC
+		LIMIT 10
+	`, path, path, path, path)
+
+	rows, err := c.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stats []model.AirportStat
+	for rows.Next() {
+		var s model.AirportStat
+		if err := rows.Scan(&s.Iata, &s.City, &s.Count); err != nil {
+			return nil, err
+		}
+		stats = append(stats, s)
+	}
+	return stats, nil
+}
+
+// GetTopDestinations retrieves the top 10 destination airports.
+func (c *DB) GetTopDestinations() ([]model.AirportStat, error) {
+	return c.getTopAirports("destination")
+}
+
+// GetTopSources retrieves the top 10 source airports.
+func (c *DB) GetTopSources() ([]model.AirportStat, error) {
+	return c.getTopAirports("origin")
 }

@@ -70,6 +70,53 @@
             .last-10-flights td:nth-of-type(6):before { content: "Last Seen"; }
             .most-common-flights td:nth-of-type(6):before { content: "Count"; }
         }
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .bar-item {
+            display: flex;
+            align-items: center;
+        }
+        .bar-label {
+            width: 200px;
+            font-size: 0.9em;
+            text-align: right;
+            padding-right: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .bar-wrapper {
+            flex-grow: 1;
+            background-color: #eee;
+            border-radius: 4px;
+            height: 24px;
+            position: relative;
+        }
+        .bar {
+            height: 100%;
+            background-color: #3498db;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        .bar-value {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.8em;
+            color: #333;
+            font-weight: bold;
+        }
+        @media (max-width: 600px) {
+            .bar-label {
+                width: 120px;
+                font-size: 0.8em;
+            }
+        }
     </style>
 </head>
 <body>
@@ -95,6 +142,40 @@
             {{template "flight_table" .MostCommonFlights}}
         {{else}}
             <p>No flights seen yet.</p>
+        {{end}}
+
+        <h2>Top 10 Destinations</h2>
+        {{if .TopDestinations}}
+            <div class="bar-chart">
+                {{range .TopDestinations}}
+                    <div class="bar-item">
+                        <div class="bar-label">{{.Iata}} ({{.City}})</div>
+                        <div class="bar-wrapper">
+                            <div class="bar" style="width: {{.Percentage}}%;"></div>
+                            <div class="bar-value">{{.Count}}</div>
+                        </div>
+                    </div>
+                {{end}}
+            </div>
+        {{else}}
+            <p>No destination data available.</p>
+        {{end}}
+
+        <h2>Top 10 Sources</h2>
+        {{if .TopSources}}
+            <div class="bar-chart">
+                {{range .TopSources}}
+                    <div class="bar-item">
+                        <div class="bar-label">{{.Iata}} ({{.City}})</div>
+                        <div class="bar-wrapper">
+                            <div class="bar" style="width: {{.Percentage}}%;"></div>
+                            <div class="bar-value">{{.Count}}</div>
+                        </div>
+                    </div>
+                {{end}}
+            </div>
+        {{else}}
+            <p>No source data available.</p>
         {{end}}
     </div>
 </body>
