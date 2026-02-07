@@ -3,4 +3,5 @@ sopra.db.bak
 .envrc
 sopra
 sopra.db
+!sample/sopra.db
 *.log
