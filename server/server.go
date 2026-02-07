@@ -115,6 +115,7 @@ func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
 		SourceCodeIcao      string    `json:"source_code_icao"`
 		LastTimeSeen        time.Time `json:"last_time_seen"`
 		AirplaneModel       string    `json:"airplane_model"`
+		Distance            float64   `json:"distance_m"`
 	}{
 		Flight:              flight.Ident,
 		Operator:            operator.Shortname,
@@ -126,6 +127,7 @@ func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
 		SourceCodeIcao:      flight.Origin.CodeIcao,
 		LastTimeSeen:        lastSeen,
 		AirplaneModel:       flight.AircraftType,
+		Distance:            flight.Distance,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -308,6 +310,7 @@ func (s *Server) getAllFlightsHandler(w http.ResponseWriter, r *http.Request) {
 		SourceCodeIcao      string    `json:"source_code_icao"`
 		LastTimeSeen        time.Time `json:"last_time_seen"`
 		AirplaneModel       string    `json:"airplane_model"`
+		Distance            float64   `json:"distance_m"`
 	}
 
 	var responses []FlightResponse
@@ -332,6 +335,7 @@ func (s *Server) getAllFlightsHandler(w http.ResponseWriter, r *http.Request) {
 			SourceCodeIcao:      flight.Origin.CodeIcao,
 			LastTimeSeen:        lastSeens[i],
 			AirplaneModel:       flight.AircraftType,
+			Distance:            flight.Distance,
 		}
 		responses = append(responses, response)
 	}

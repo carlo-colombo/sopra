@@ -66,6 +66,7 @@ type FlightInfo struct {
 	Type                          string        `json:"type"`
 	Latitude                      float64       `json:"latitude"`
 	Longitude                     float64       `json:"longitude"`
+	Distance                      float64       `json:"distance_m"`
 	IdentificationCount           int           `json:"-"`
 }
 

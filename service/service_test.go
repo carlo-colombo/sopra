@@ -112,6 +112,7 @@ func TestGetFlightsInRadius(t *testing.T) {
 	assert.Equal(t, flightAwareInfo.OperatorIcao, flights[0].OperatorIcao)
 	assert.Equal(t, flightAwareInfo.Origin.Code, flights[0].Origin.Code)
 	assert.Equal(t, flightAwareInfo.Destination.Code, flights[0].Destination.Code)
+	assert.NotZero(t, flights[0].Distance)
 
 	// Check that the operator info was cached
 	cachedOperator, err := db.GetOperator("UAL")
