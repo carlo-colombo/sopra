@@ -60,17 +60,17 @@ func NewServer(s FlightService, cfg *config.Config, db *database.DB) *Server {
 }
 
 // Start starts the HTTP server.
-func (s *Server) Start() {
+func (s *Server) Start() error {
 	http.HandleFunc("/", s.getStatsHandler)
 	http.HandleFunc("/flights", s.getFlightsHandler)
 	http.HandleFunc("/last-flight", s.getLastFlightHandler)
 	http.HandleFunc("/all-flights", s.getAllFlightsHandler)
 
 	port := fmt.Sprintf(":%d", s.config.Port)
-	log.Printf("Server starting on port %s", port)
 	if err := http.ListenAndServe(port, nil); err != nil {
-		log.Fatalf("Server failed to start: %v", err)
+		return fmt.Errorf("server failed to start: %w", err)
 	}
+	return nil
 }
 
 func (s *Server) getOperatorInfo(icao string) (*model.OperatorInfo, error) {

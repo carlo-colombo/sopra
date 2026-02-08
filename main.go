@@ -63,8 +63,8 @@ func main() {
 
 	openskyClient := client.NewOpenSkyClient(cfg.OpenSkyClient.ID, cfg.OpenSkyClient.Secret)
 	flightawareClient := client.NewFlightAwareClient(cfg.FlightAware.APIKey, db)
-	climatiqClient := client.NewClimatiqClient(cfg, db)
-	appService := service.NewService(openskyClient, flightawareClient, climatiqClient, db, cfg) // Pass cfg here
+	travelImpactModelClient := client.NewTravelImpactModelClient(cfg, db)
+	appService := service.NewService(openskyClient, flightawareClient, travelImpactModelClient, db, cfg) // Pass cfg here
 
 	if cfg.Print {
 		flights, err := appService.GetFlightsInRadius(cfg.Service.Latitude, cfg.Service.Longitude, cfg.Service.Radius)
@@ -93,6 +93,9 @@ func main() {
 		go appService.RunWatchMode(cfg.Interval)
 	}
 
+	log.Printf("Server starting on port :%d", cfg.Port)
 	httpServer := server.NewServer(appService, cfg, db)
-	httpServer.Start()
+	if err := httpServer.Start(); err != nil {
+		log.Fatalf("Server failed to start: %v", err)
+	}
 }
