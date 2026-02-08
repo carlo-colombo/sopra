@@ -99,13 +99,17 @@ func main() {
 			destIdx = r.Intn(len(airports))
 		}
 
+		aircraftTypes := []string{"A320", "A333", "A359", "A388", "B738", "B748", "B77W", "B789", "GLF6"}
+
 		f := &model.FlightInfo{
-			Ident:        ident,
-			OperatorIcao: opIcao,
-			Origin:       airports[originIdx],
-			Destination:  airports[destIdx],
-			Latitude:     47.0 + r.Float64(),
-			Longitude:    8.0 + r.Float64(),
+			Ident:         ident,
+			OperatorIcao:  opIcao,
+			Origin:        airports[originIdx],
+			Destination:   airports[destIdx],
+			Latitude:      47.0 + r.Float64(),
+			Longitude:     8.0 + r.Float64(),
+			AircraftType:  aircraftTypes[r.Intn(len(aircraftTypes))],
+			RouteDistance: 500 + r.Intn(5000),
 		}
 
 		if err := db.LogFlight(f.Ident, f); err != nil {

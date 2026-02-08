@@ -135,5 +135,15 @@ Adherence to Go's idiomatic style is paramount.
 
 No specific `.cursor/rules/` or `.github/copilot-instructions.md` files were found in this repository. Agents should adhere strictly to the Go language and project-specific guidelines outlined above.
 
+## 4. Task Management Guidelines
+
+To ensure efficient and transparent progress, agents must effectively manage tasks using the `todowrite` tool.
+
+*   **Proactive Task Creation**: For any task requiring multiple steps or significant complexity, break it down into smaller, actionable items and add them to your todo list using `todowrite`.
+*   **Task States**: Utilize the defined task states: `pending` (not started), `in_progress` (currently working on), `completed` (finished successfully), and `cancelled` (no longer relevant).
+*   **Single In-Progress Task**: Focus on one task at a time. Only one todo item should have an `in_progress` status at any given moment. Complete the current task before starting the next.
+*   **Immediate Completion**: Mark tasks as `completed` as soon as they are finished to maintain an accurate progress log.
+*   **Cancellation**: If a task becomes irrelevant or superseded, mark it as `cancelled`.
+
 ---
 *This `AGENTS.md` file was generated to assist agentic coding agents in contributing effectively to the `sopra` project.*

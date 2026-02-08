@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/carlo-colombo/sopra/config"
@@ -93,6 +94,7 @@ func (s *Service) GetFlightsInRadius(lat, lon, radius float64) ([]model.FlightIn
 			flightInfo.Latitude = flight.Latitude
 			flightInfo.Longitude = flight.Longitude
 			flightInfo.Distance = haversine.Distance(lat, lon, flight.Latitude, flight.Longitude) * 1000
+			flightInfo.CO2KG = EstimateCO2(flightInfo.AircraftType, flightInfo.RouteDistance)
 			if flightInfo.OperatorIcao != "" {
 				_, err := s.getOperatorInfo(flightInfo.OperatorIcao)
 				if err != nil {
@@ -154,6 +156,30 @@ func (s *Service) LogFlights(flights []model.FlightInfo) {
 
 	}
 
+}
+
+// EstimateCO2 estimates the CO2 emissions of a flight in kilograms.
+func EstimateCO2(aircraftType string, distanceNm int) float64 {
+	if distanceNm <= 0 {
+		return 0
+	}
+	factor := 15.0 // Default kg CO2 / nm
+
+	// Rough estimation based on aircraft type
+	// Jumbo/Heavy
+	if strings.HasPrefix(aircraftType, "A38") || strings.HasPrefix(aircraftType, "B74") {
+		factor = 50.0
+	} else if strings.HasPrefix(aircraftType, "A35") || strings.HasPrefix(aircraftType, "B77") {
+		factor = 30.0
+	} else if strings.HasPrefix(aircraftType, "A33") || strings.HasPrefix(aircraftType, "B78") {
+		factor = 22.0
+	} else if strings.HasPrefix(aircraftType, "A32") || strings.HasPrefix(aircraftType, "B73") {
+		factor = 12.0
+	} else if strings.HasPrefix(aircraftType, "C5") || strings.HasPrefix(aircraftType, "GLF") || strings.HasPrefix(aircraftType, "F2TH") {
+		factor = 5.0
+	}
+
+	return float64(distanceNm) * factor
 }
 
 // RunWatchMode continuously fetches and logs flights at a specified interval.
