@@ -28,6 +28,9 @@ type Config struct {
 		Longitude float64 `mapstructure:"longitude"`
 		Radius    float64 `mapstructure:"radius"`
 	} `mapstructure:"service"`
+	Climatiq struct {
+		APIKey string `mapstructure:"api_key"`
+	} `mapstructure:"climatiq"`
 }
 
 // LoadConfig loads configuration from file and environment variables.
@@ -55,6 +58,9 @@ func LoadConfig(path string) (*Config, error) {
 	}
 	if err := viper.BindEnv("flightaware.api_key", "FLIGHTAWARE_API_KEY"); err != nil {
 		log.Fatalf("failed to bind 'flightaware.api_key' env: %v", err)
+	}
+	if err := viper.BindEnv("climatiq.api_key", "CLIMATIQ_API_KEY"); err != nil {
+		log.Fatalf("failed to bind 'climatiq.api_key' env: %v", err)
 	}
 	if err := viper.BindEnv("service.latitude", "DEFAULT_LATITUDE"); err != nil {
 		log.Fatalf("failed to bind 'service.latitude' env: %v", err)
@@ -87,6 +93,7 @@ func LoadConfig(path string) (*Config, error) {
 	viper.SetDefault("opensky_client.secret", "")
 
 	viper.SetDefault("flightaware.api_key", "")
+	viper.SetDefault("climatiq.api_key", "")
 
 	viper.SetDefault("service.latitude", 47.3769)
 
@@ -144,6 +151,8 @@ func (c *Config) String() string {
 	  FlightAware Client:
 
 	    API Key: %s
+	  Climatiq Client:
+	    API Key: %s
 
 	  Service Defaults:
 
@@ -163,6 +172,8 @@ func (c *Config) String() string {
 		c.OpenSkyClient.ID, c.OpenSkyClient.Secret,
 
 		c.FlightAware.APIKey,
+
+		c.Climatiq.APIKey,
 
 		c.Service.Latitude, c.Service.Longitude, c.Service.Radius)
 

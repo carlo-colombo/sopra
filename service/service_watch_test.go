@@ -11,6 +11,7 @@ import (
 	"github.com/carlo-colombo/sopra/database"
 	"github.com/carlo-colombo/sopra/model"
 	"github.com/carlo-colombo/sopra/service" // Import the service package
+	"github.com/stretchr/testify/mock"
 )
 
 // MockOpenSkyClient is a mock implementation of OpenSkyAPIClient for testing.
@@ -49,6 +50,16 @@ func (m *MockFlightAwareClient) GetOperator(icao string) (string, error) {
 	return "", nil
 }
 
+// MockClimatiqClient is a mock implementation of the ClimatiqAPIClient interface.
+type MockClimatiqClient struct {
+	mock.Mock
+}
+
+func (m *MockClimatiqClient) GetFlightEmission(aircraftType string, distanceKm float64) (float64, error) {
+	args := m.Called(aircraftType, distanceKm)
+	return args.Get(0).(float64), args.Error(1)
+}
+
 // Ensure that logging doesn't print during tests
 func TestMain(m *testing.M) {
 	log.SetOutput(os.Stderr) // Or os.Stdout, or ioutil.Discard
@@ -66,9 +77,15 @@ func TestService_RunWatchMode(t *testing.T) {
 	// 2. Setup a mock FlightAware client
 	mockFlightAware := &MockFlightAwareClient{}
 	mockFlightAware.FlightToReturn = &model.FlightInfo{
-		Ident:      "UAL123",
-		FaFlightID: "UAL123-12345",
+		Ident:         "UAL123",
+		FaFlightID:    "UAL123-12345",
+		AircraftType:  "B738", // Add AircraftType for Climatiq mock
+		RouteDistance: 1000,   // Add RouteDistance for Climatiq mock
 	}
+	// 2.5. Setup a mock Climatiq client
+	mockClimatiq := new(MockClimatiqClient)
+	_ = float64(mockFlightAware.FlightToReturn.RouteDistance) * 1.852 // Unused variable, assign to blank identifier
+	mockClimatiq.On("GetFlightEmission", mock.AnythingOfType("string"), mock.AnythingOfType("float64")).Return(18520.0, nil)
 
 	// 3. Create a temporary database for testing
 	tempDBPath := "test_sopra.db"
@@ -109,7 +126,7 @@ func TestService_RunWatchMode(t *testing.T) {
 	}
 
 	// 5. Initialize the service with mocks and test config
-	appService := service.NewService(mockOpenSky, mockFlightAware, db, testCfg)
+	appService := service.NewService(mockOpenSky, mockFlightAware, mockClimatiq, db, testCfg)
 
 	// 6. Run RunWatchMode in a goroutine
 	done := make(chan struct{})

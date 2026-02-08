@@ -63,7 +63,8 @@ func main() {
 
 	openskyClient := client.NewOpenSkyClient(cfg.OpenSkyClient.ID, cfg.OpenSkyClient.Secret)
 	flightawareClient := client.NewFlightAwareClient(cfg.FlightAware.APIKey, db)
-	appService := service.NewService(openskyClient, flightawareClient, db, cfg) // Pass cfg here
+	climatiqClient := client.NewClimatiqClient(cfg, db)
+	appService := service.NewService(openskyClient, flightawareClient, climatiqClient, db, cfg) // Pass cfg here
 
 	if cfg.Print {
 		flights, err := appService.GetFlightsInRadius(cfg.Service.Latitude, cfg.Service.Longitude, cfg.Service.Radius)

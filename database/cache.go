@@ -238,6 +238,44 @@ func (c *DB) ClearFlightLog() error {
 	return err
 }
 
+// Set stores a key-value pair in the cache with an expiration time.
+func (c *DB) Set(key string, value string, ttl time.Duration) error {
+	expiresAt := time.Now().Add(ttl)
+	_, err := c.db.Exec("INSERT INTO key_value_cache (key, value, expires_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, expires_at = excluded.expires_at", key, value, expiresAt)
+	if err != nil {
+		log.Printf("Error setting cache for key %s: %v\n", key, err)
+	} else {
+		log.Printf("Cache set for key: %s, expires at: %s\n", key, expiresAt)
+	}
+	return err
+}
+
+// Get retrieves a value from the cache by key.
+func (c *DB) Get(key string) (string, error) {
+	var value string
+	var expiresAt time.Time
+	err := c.db.QueryRow("SELECT value, expires_at FROM key_value_cache WHERE key = ?", key).Scan(&value, &expiresAt)
+	if err == sql.ErrNoRows {
+		return "", nil // Cache miss
+	}
+	if err != nil {
+		return "", err
+	}
+
+	if time.Now().After(expiresAt) {
+		// Entry expired, delete it
+		_, err := c.db.Exec("DELETE FROM key_value_cache WHERE key = ?", key)
+		if err != nil {
+			log.Printf("Error deleting expired cache entry for key %s: %v\n", key, err)
+		}
+		log.Printf("Cache entry for key %s expired and deleted.\n", key)
+		return "", nil // Treat as cache miss
+	}
+
+	log.Printf("Cache hit for key: %s, expires at: %s\n", key, expiresAt)
+	return value, nil
+}
+
 // LogOperator stores an operator's JSON data in the cache.
 func (c *DB) LogOperator(icao string, jsonValue string) error {
 	_, err := c.db.Exec("INSERT INTO operator_log (icao, value) VALUES (?, ?) ON CONFLICT(icao) DO NOTHING", icao, jsonValue)

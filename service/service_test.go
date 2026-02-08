@@ -58,11 +58,22 @@ func (m *MockFlightAwareClient) GetOperator(icao string) (string, error) {
 	return args.String(0), args.Error(1)
 }
 
+// MockClimatiqClient is a mock implementation of the ClimatiqAPIClient interface.
+type MockClimatiqClient struct {
+	mock.Mock
+}
+
+func (m *MockClimatiqClient) GetFlightEmission(aircraftType string, distanceKm float64) (float64, error) {
+	args := m.Called(aircraftType, distanceKm)
+	return args.Get(0).(float64), args.Error(1)
+}
+
 func TestGetFlightsInRadius(t *testing.T) {
 	// Arrange
 	mockOpenSkyClient := new(MockOpenSkyClient)
 	mockFlightAwareClient := new(MockFlightAwareClient)
-	db := newTestDB(t) // Restored db initialization
+	mockClimatiqClient := new(MockClimatiqClient) // Initialize mock Climatiq client
+	db := newTestDB(t)                            // Restored db initialization
 
 	// Mock OpenSky client to return a list of flights
 	openskyFlights := []model.Flight{
@@ -83,21 +94,26 @@ func TestGetFlightsInRadius(t *testing.T) {
 
 	// Mock FlightAware client to return flight info for UAL123
 	flightAwareInfo := &model.FlightInfo{
-		Ident:        "UAL123",
-		OperatorIcao: "UAL",
-		AircraftType: "B738",
-		Origin:       model.AirportDetail{Code: "KORD"},
-		Destination:  model.AirportDetail{Code: "KLAX"},
-		Status:       "En Route",
+		Ident:         "UAL123",
+		OperatorIcao:  "UAL",
+		AircraftType:  "B738",
+		Origin:        model.AirportDetail{Code: "KORD"},
+		Destination:   model.AirportDetail{Code: "KLAX"},
+		Status:        "En Route",
+		RouteDistance: 1000, // Example distance in NM
 	}
 	mockFlightAwareClient.On("GetFlightInfo", "UAL123").Return(flightAwareInfo, nil)
+
+	// Mock Climatiq client to return a CO2 emission
+	expectedDistanceKm := float64(flightAwareInfo.RouteDistance) * 1.852                                              // Convert NM to KM
+	mockClimatiqClient.On("GetFlightEmission", flightAwareInfo.AircraftType, expectedDistanceKm).Return(18520.0, nil) // Mock return value
 
 	// Mock GetOperator call
 	operatorInfoJSON := `{"name": "United Airlines", "shortname": "united"}`
 	mockFlightAwareClient.On("GetOperator", "UAL").Return(operatorInfoJSON, nil)
 
-	cfg := &config.Config{}                                                  // Dummy config
-	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db, cfg) // Pass db
+	cfg := &config.Config{}                                                                      // Dummy config
+	service := NewService(mockOpenSkyClient, mockFlightAwareClient, mockClimatiqClient, db, cfg) // Pass db
 
 	// Act
 	flights, err := service.GetFlightsInRadius(40.7128, -74.0060, 100.0)
@@ -113,6 +129,7 @@ func TestGetFlightsInRadius(t *testing.T) {
 	assert.Equal(t, flightAwareInfo.Origin.Code, flights[0].Origin.Code)
 	assert.Equal(t, flightAwareInfo.Destination.Code, flights[0].Destination.Code)
 	assert.NotZero(t, flights[0].Distance)
+	assert.Equal(t, 18520.0, flights[0].CO2KG) // Assert CO2KG is set by Climatiq mock
 
 	// Check that the operator info was cached
 	cachedOperator, err := db.GetOperator("UAL")
@@ -126,12 +143,13 @@ func TestGetFlightsInRadius(t *testing.T) {
 func TestGetFlightsInRadius_OpenSkyError(t *testing.T) {
 	mockOpenSkyClient := new(MockOpenSkyClient)
 	mockFlightAwareClient := new(MockFlightAwareClient)
+	mockClimatiqClient := new(MockClimatiqClient) // Initialize mock Climatiq client
 	db := newTestDB(t)
 
 	mockOpenSkyClient.On("GetStatesInRadius", mock.Anything, mock.Anything, mock.Anything).Return([]model.Flight{}, errors.New("opensky error"))
 
 	cfg := &config.Config{} // Dummy config
-	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db, cfg)
+	service := NewService(mockOpenSkyClient, mockFlightAwareClient, mockClimatiqClient, db, cfg)
 
 	flights, err := service.GetFlightsInRadius(40.7128, -74.0060, 100.0)
 
@@ -144,6 +162,7 @@ func TestGetFlightsInRadius_OpenSkyError(t *testing.T) {
 func TestGetFlightsInRadius_FlightAwareError(t *testing.T) {
 	mockOpenSkyClient := new(MockOpenSkyClient)
 	mockFlightAwareClient := new(MockFlightAwareClient)
+	mockClimatiqClient := new(MockClimatiqClient) // Initialize mock Climatiq client
 	db := newTestDB(t)
 
 	openskyFlights := []model.Flight{
@@ -158,7 +177,7 @@ func TestGetFlightsInRadius_FlightAwareError(t *testing.T) {
 	mockFlightAwareClient.On("GetFlightInfo", "UAL123").Return(nil, errors.New("flightaware error"))
 
 	cfg := &config.Config{} // Dummy config
-	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db, cfg)
+	service := NewService(mockOpenSkyClient, mockFlightAwareClient, mockClimatiqClient, db, cfg)
 
 	flights, err := service.GetFlightsInRadius(40.7128, -74.0060, 100.0)
 
@@ -172,6 +191,7 @@ func TestGetFlightsInRadius_FlightAwareError(t *testing.T) {
 func TestGetFlightsInRadius_NoCallsign(t *testing.T) {
 	mockOpenSkyClient := new(MockOpenSkyClient)
 	mockFlightAwareClient := new(MockFlightAwareClient)
+	mockClimatiqClient := new(MockClimatiqClient) // Initialize mock Climatiq client
 	db := newTestDB(t)
 
 	openskyFlights := []model.Flight{
@@ -185,7 +205,7 @@ func TestGetFlightsInRadius_NoCallsign(t *testing.T) {
 	mockOpenSkyClient.On("GetStatesInRadius", mock.Anything, mock.Anything, mock.Anything).Return(openskyFlights, nil)
 
 	cfg := &config.Config{} // Dummy config
-	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db, cfg)
+	service := NewService(mockOpenSkyClient, mockFlightAwareClient, mockClimatiqClient, db, cfg)
 
 	flights, err := service.GetFlightsInRadius(40.7128, -74.0060, 100.0)
 
@@ -200,9 +220,10 @@ func TestLogFlights(t *testing.T) {
 	// Arrange
 	mockOpenSkyClient := new(MockOpenSkyClient)
 	mockFlightAwareClient := new(MockFlightAwareClient)
+	mockClimatiqClient := new(MockClimatiqClient) // Initialize mock Climatiq client
 	db := newTestDB(t)
 	cfg := &config.Config{} // Dummy config
-	service := NewService(mockOpenSkyClient, mockFlightAwareClient, db, cfg)
+	service := NewService(mockOpenSkyClient, mockFlightAwareClient, mockClimatiqClient, db, cfg)
 
 	flightsToLog := []model.FlightInfo{
 		{
