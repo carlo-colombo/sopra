@@ -160,15 +160,6 @@ func (s *Service) LogFlights(flights []model.FlightInfo) {
 	}
 }
 
-// EstimateCO2 estimates the CO2 emissions of a flight in kilograms.
-// This function is now deprecated and will use the Climatiq API through the service struct.
-func EstimateCO2(aircraftType string, distanceNm int) float64 {
-	// This function is no longer used directly.
-	// The CO2 estimation is now handled by the climatiqClient within the GetFlightsInRadius method.
-	log.Println("Warning: Deprecated EstimateCO2 function called. Use service.climatiqClient.GetFlightEmission instead.")
-	return 0.0 // Return 0 as this function is deprecated.
-}
-
 // RunWatchMode continuously fetches and logs flights at a specified interval.
 func (s *Service) RunWatchMode(interval int) {
 	ticker := time.NewTicker(time.Duration(interval) * time.Second)
