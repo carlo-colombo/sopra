@@ -6,7 +6,7 @@
             <th>Operator</th>
             <th>Destination</th>
             <th>Origin</th>
-            <th>Distance (m)</th>
+            <th>Distance (km)</th>
             <th>CO2 (kg)</th>
             {{if eq .Header "Last Seen"}}<th>Time Ago</th>{{end}}
             <th>{{.Header}}</th>
@@ -19,8 +19,8 @@
             <td>{{if .Operator.Shortname}}{{.Operator.Shortname}}{{else}}{{.OperatorIcao}}{{end}} ({{.Operator.Country}})</td>
             <td>{{.Destination.City}} ({{.Destination.CodeIata}})</td>
             <td>{{.Origin.City}} ({{.Origin.CodeIata}})</td>
-            <td>{{printf "%.0f" .Distance}}</td>
-            <td>{{printf "%.0f" .CO2KG}}</td>
+            <td>{{.DistanceDisplay}}</td>
+            <td>{{.CO2KGDisplay}}</td>
             {{if eq $.Header "Last Seen"}}<td>{{timeAgo .LastSeen}}</td>{{end}}
             <td>{{if eq $.Header "Last Seen"}}{{formatTime .LastSeen}}{{else}}{{.IdentificationCount}}{{end}}</td>
         </tr>

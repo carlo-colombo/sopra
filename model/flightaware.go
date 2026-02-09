@@ -1,6 +1,8 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 // FlightAwareResponse represents the top-level structure of the FlightAware AeroAPI response.
 type FlightAwareResponse struct {
@@ -68,6 +70,8 @@ type FlightInfo struct {
 	Longitude                     float64       `json:"longitude"`
 	Distance                      float64       `json:"distance_m"`
 	CO2KG                         float64       `json:"co2_kg"`
+	DistanceDisplay               string        `json:"-"`
+	CO2KGDisplay                  string        `json:"-"`
 	IdentificationCount           int           `json:"-"`
 }
 

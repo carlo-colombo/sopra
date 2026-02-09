@@ -7,14 +7,15 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/carlo-colombo/sopra/config"
-	"github.com/hako/durafmt"
 	"github.com/carlo-colombo/sopra/database"
 	"github.com/carlo-colombo/sopra/model"
-	"github.com/carlo-colombo/sopra/service"
+	"github.com/hako/durafmt"
+	// "github.com/carlo-colombo/sopra/service" // Removed as no longer used
 )
 
 //go:embed statics/index.html
@@ -82,6 +83,30 @@ func NewServer(s FlightService, cfg *config.Config, db *database.DB) *Server {
 	}
 }
 
+// formatNumberWithThousandsSeparator adds thousand separators to a float64 number,
+// rounding to a whole number, and returns it as a string.
+func formatNumberWithThousandsSeparator(n float64) string {
+	// Round to the nearest whole number
+	rounded := int64(n + 0.5) // Add 0.5 for proper rounding, then convert to int64
+
+	// Convert to string
+	s := strconv.FormatInt(rounded, 10)
+
+	// Add commas
+	nSpaces := (len(s) - 1) / 3
+	// Pre-allocate memory for the result string (original length + number of commas)
+	var result strings.Builder
+	result.Grow(len(s) + nSpaces)
+
+	for i, r := range s {
+		if i > 0 && (len(s)-i)%3 == 0 {
+			result.WriteRune(',')
+		}
+		result.WriteRune(r)
+	}
+	return result.String()
+}
+
 // Start starts the HTTP server.
 func (s *Server) Start() error {
 	http.HandleFunc("/", s.getStatsHandler)
@@ -140,8 +165,8 @@ func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
 		LastTimeSeen        time.Time `json:"last_time_seen"`
 		LastSeenAgo         string    `json:"last_seen_ago"`
 		AirplaneModel       string    `json:"airplane_model"`
-		Distance            float64   `json:"distance_m"`
-		CO2KG               float64   `json:"co2_kg"`
+		Distance            float64   `json:"distance_m"` // Reverted to float64
+		CO2KG               float64   `json:"co2_kg"`     // Reverted to float64
 	}{
 		Flight:              flight.Ident,
 		Operator:            operator.Shortname,
@@ -154,12 +179,8 @@ func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
 		LastTimeSeen:        lastSeen,
 		LastSeenAgo:         formatTimeAgo(lastSeen),
 		AirplaneModel:       flight.AircraftType,
-		Distance:            flight.Distance,
-		CO2KG:               flight.CO2KG,
-	}
-
-	if response.CO2KG == 0 && flight.RouteDistance > 0 {
-		response.CO2KG = service.EstimateCO2(flight.AircraftType, flight.RouteDistance)
+		Distance:            flight.Distance, // Assign raw float64
+		CO2KG:               flight.CO2KG,    // Assign raw float64
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -228,9 +249,10 @@ func (s *Server) getStatsHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			operator.Shortname = "N/A"
 		}
-		if lastFlight.CO2KG == 0 && lastFlight.RouteDistance > 0 {
-			lastFlight.CO2KG = service.EstimateCO2(lastFlight.AircraftType, lastFlight.RouteDistance)
-		}
+		// Populate Display fields for HTML template
+		lastFlight.DistanceDisplay = formatNumberWithThousandsSeparator(lastFlight.Distance / 1000)
+		lastFlight.CO2KGDisplay = fmt.Sprintf("%.0f", lastFlight.CO2KG)
+
 		lastFlightData = &FlightData{
 			FlightInfo: lastFlight,
 			Operator:   &operator,
@@ -240,9 +262,6 @@ func (s *Server) getStatsHandler(w http.ResponseWriter, r *http.Request) {
 
 	var last10FlightsData []FlightData
 	for i, flight := range last10Flights {
-		if flight.CO2KG == 0 && flight.RouteDistance > 0 {
-			flight.CO2KG = service.EstimateCO2(flight.AircraftType, flight.RouteDistance)
-		}
 		var operator model.OperatorInfo
 		if opJSON, ok := operatorMap[flight.OperatorIcao]; ok {
 			if err := json.Unmarshal([]byte(opJSON), &operator); err != nil {
@@ -252,6 +271,10 @@ func (s *Server) getStatsHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			operator.Shortname = "N/A"
 		}
+		// Populate Display fields for HTML template
+		flight.DistanceDisplay = formatNumberWithThousandsSeparator(flight.Distance / 1000)
+		flight.CO2KGDisplay = fmt.Sprintf("%.0f", flight.CO2KG)
+
 		last10FlightsData = append(last10FlightsData, FlightData{
 			FlightInfo: flight,
 			Operator:   &operator,
@@ -266,9 +289,6 @@ func (s *Server) getStatsHandler(w http.ResponseWriter, r *http.Request) {
 
 	var mostCommonFlightsData []MostCommonFlightData
 	for _, flight := range mostCommonFlights {
-		if flight.CO2KG == 0 && flight.RouteDistance > 0 {
-			flight.CO2KG = service.EstimateCO2(flight.AircraftType, flight.RouteDistance)
-		}
 		var operator model.OperatorInfo
 		if opJSON, ok := operatorMap[flight.OperatorIcao]; ok {
 			if err := json.Unmarshal([]byte(opJSON), &operator); err != nil {
@@ -278,6 +298,10 @@ func (s *Server) getStatsHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			operator.Shortname = "N/A"
 		}
+		// Populate Display fields for HTML template
+		flight.DistanceDisplay = formatNumberWithThousandsSeparator(flight.Distance / 1000)
+		flight.CO2KGDisplay = fmt.Sprintf("%.0f", flight.CO2KG)
+
 		mostCommonFlightsData = append(mostCommonFlightsData, MostCommonFlightData{
 			FlightInfo: flight,
 			Operator:   &operator,
@@ -394,15 +418,12 @@ func (s *Server) getAllFlightsHandler(w http.ResponseWriter, r *http.Request) {
 		LastTimeSeen        time.Time `json:"last_time_seen"`
 		LastSeenAgo         string    `json:"last_seen_ago"`
 		AirplaneModel       string    `json:"airplane_model"`
-		Distance            float64   `json:"distance_m"`
-		CO2KG               float64   `json:"co2_kg"`
+		Distance            float64   `json:"distance_m"` // Reverted to float64
+		CO2KG               float64   `json:"co2_kg"`     // Reverted to float64
 	}
 
 	var responses []FlightResponse
 	for i, flight := range flights {
-		if flight.CO2KG == 0 && flight.RouteDistance > 0 {
-			flight.CO2KG = service.EstimateCO2(flight.AircraftType, flight.RouteDistance)
-		}
 		var operator model.OperatorInfo
 		if opJSON, ok := operatorMap[flight.OperatorIcao]; ok {
 			if err := json.Unmarshal([]byte(opJSON), &operator); err != nil {
@@ -424,8 +445,8 @@ func (s *Server) getAllFlightsHandler(w http.ResponseWriter, r *http.Request) {
 			LastTimeSeen:        lastSeens[i],
 			LastSeenAgo:         formatTimeAgo(lastSeens[i]),
 			AirplaneModel:       flight.AircraftType,
-			Distance:            flight.Distance,
-			CO2KG:               flight.CO2KG,
+			Distance:            flight.Distance, // Assign raw float64
+			CO2KG:               flight.CO2KG,    // Assign raw float64
 		}
 		responses = append(responses, response)
 	}
