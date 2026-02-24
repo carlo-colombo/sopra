@@ -15,6 +15,7 @@ type Config struct {
 	Interval int    `mapstructure:"interval"`
 	Port     int    `mapstructure:"port"`
 	DBPath   string `mapstructure:"db_path"`
+	Timezone string `mapstructure:"timezone"`
 
 	OpenSkyClient struct {
 		ID     string `mapstructure:"id"`
@@ -80,6 +81,9 @@ func LoadConfig(path string) (*Config, error) {
 	if err := viper.BindEnv("db_path", "DB_PATH"); err != nil {
 		log.Fatalf("failed to bind 'db_path' env: %v", err)
 	}
+	if err := viper.BindEnv("timezone", "TIMEZONE"); err != nil {
+		log.Fatalf("failed to bind 'timezone' env: %v", err)
+	}
 
 	// Set default values
 
@@ -87,6 +91,7 @@ func LoadConfig(path string) (*Config, error) {
 	viper.SetDefault("watch", false)
 	viper.SetDefault("interval", 300)
 	viper.SetDefault("db_path", "sopra.db")
+	viper.SetDefault("timezone", "Local")
 
 	viper.SetDefault("opensky_client.id", "")
 
@@ -141,6 +146,7 @@ func (c *Config) String() string {
 	  Interval: %ds
 	  Port: %d
 	  DB Path: %s
+	  Timezone: %s
 
 	  OpenSky Client:
 
@@ -168,6 +174,7 @@ func (c *Config) String() string {
 		c.Interval,
 		c.Port,
 		c.DBPath,
+		c.Timezone,
 
 		c.OpenSkyClient.ID, c.OpenSkyClient.Secret,
 
