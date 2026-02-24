@@ -8,6 +8,7 @@
             <th>Origin</th>
             <th>Distance (m)</th>
             <th>CO2 (kg)</th>
+            {{if eq .Header "Last Seen"}}<th>Time Ago</th>{{end}}
             <th>{{.Header}}</th>
         </tr>
     </thead>
@@ -20,6 +21,7 @@
             <td>{{.Origin.City}} ({{.Origin.CodeIata}})</td>
             <td>{{printf "%.0f" .Distance}}</td>
             <td>{{printf "%.0f" .CO2KG}}</td>
+            {{if eq $.Header "Last Seen"}}<td>{{timeAgo .LastSeen}}</td>{{end}}
             <td>{{if eq $.Header "Last Seen"}}{{formatTime .LastSeen}}{{else}}{{.IdentificationCount}}{{end}}</td>
         </tr>
         {{end}}

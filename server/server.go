@@ -7,9 +7,11 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/carlo-colombo/sopra/config"
+	"github.com/hako/durafmt"
 	"github.com/carlo-colombo/sopra/database"
 	"github.com/carlo-colombo/sopra/model"
 	"github.com/carlo-colombo/sopra/service"
@@ -34,12 +36,33 @@ type Server struct {
 	template *template.Template
 }
 
+// formatTimeAgo returns a human-readable string indicating how long ago a time was.
+func formatTimeAgo(t time.Time) string {
+	d := time.Since(t)
+	if d < time.Minute {
+		return "just now"
+	}
+	s := durafmt.Parse(d).LimitFirstN(2).String()
+	parts := strings.Split(s, " ")
+	if len(parts) == 4 {
+		return fmt.Sprintf("%s %s and %s %s ago", parts[0], parts[1], parts[2], parts[3])
+	}
+	return s + " ago"
+}
+
 // NewServer creates a new Server instance.
 func NewServer(s FlightService, cfg *config.Config, db *database.DB) *Server {
+	loc, err := time.LoadLocation(cfg.Timezone)
+	if err != nil {
+		log.Printf("failed to load location %s: %v. Falling back to Local", cfg.Timezone, err)
+		loc = time.Local
+	}
+
 	funcMap := template.FuncMap{
 		"formatTime": func(t time.Time) string {
-			return t.Local().Format("02/01/2006 15:04")
+			return t.In(loc).Format("02/01/2006 15:04")
 		},
+		"timeAgo": formatTimeAgo,
 	}
 
 	tmpl, err := template.New("index").Funcs(funcMap).Parse(indexHTML)
@@ -115,6 +138,7 @@ func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
 		SourceCodeIata      string    `json:"source_code_iata"`
 		SourceCodeIcao      string    `json:"source_code_icao"`
 		LastTimeSeen        time.Time `json:"last_time_seen"`
+		LastSeenAgo         string    `json:"last_seen_ago"`
 		AirplaneModel       string    `json:"airplane_model"`
 		Distance            float64   `json:"distance_m"`
 		CO2KG               float64   `json:"co2_kg"`
@@ -128,6 +152,7 @@ func (s *Server) getLastFlightHandler(w http.ResponseWriter, r *http.Request) {
 		SourceCodeIata:      flight.Origin.CodeIata,
 		SourceCodeIcao:      flight.Origin.CodeIcao,
 		LastTimeSeen:        lastSeen,
+		LastSeenAgo:         formatTimeAgo(lastSeen),
 		AirplaneModel:       flight.AircraftType,
 		Distance:            flight.Distance,
 		CO2KG:               flight.CO2KG,
@@ -367,6 +392,7 @@ func (s *Server) getAllFlightsHandler(w http.ResponseWriter, r *http.Request) {
 		SourceCodeIata      string    `json:"source_code_iata"`
 		SourceCodeIcao      string    `json:"source_code_icao"`
 		LastTimeSeen        time.Time `json:"last_time_seen"`
+		LastSeenAgo         string    `json:"last_seen_ago"`
 		AirplaneModel       string    `json:"airplane_model"`
 		Distance            float64   `json:"distance_m"`
 		CO2KG               float64   `json:"co2_kg"`
@@ -396,6 +422,7 @@ func (s *Server) getAllFlightsHandler(w http.ResponseWriter, r *http.Request) {
 			SourceCodeIata:      flight.Origin.CodeIata,
 			SourceCodeIcao:      flight.Origin.CodeIcao,
 			LastTimeSeen:        lastSeens[i],
+			LastSeenAgo:         formatTimeAgo(lastSeens[i]),
 			AirplaneModel:       flight.AircraftType,
 			Distance:            flight.Distance,
 			CO2KG:               flight.CO2KG,
