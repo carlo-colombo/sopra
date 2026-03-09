@@ -163,9 +163,17 @@ func (c *DB) GetMostCommonFlights() ([]*model.FlightInfo, error) {
 	return flights, nil
 }
 
-// GetAllFlights retrieves all the logged FlightInfo.
-func (c *DB) GetAllFlights() ([]*model.FlightInfo, []time.Time, error) {
-	rows, err := c.db.Query("SELECT value, last_seen, identification_count FROM flight_log ORDER BY last_seen DESC")
+// GetAllFlights retrieves the logged FlightInfo, optionally limited by the limit parameter.
+func (c *DB) GetAllFlights(limit int) ([]*model.FlightInfo, []time.Time, error) {
+	query := "SELECT value, last_seen, identification_count FROM flight_log ORDER BY last_seen DESC"
+	var rows *sql.Rows
+	var err error
+	if limit > 0 {
+		query += " LIMIT ?"
+		rows, err = c.db.Query(query, limit)
+	} else {
+		rows, err = c.db.Query(query)
+	}
 	if err != nil {
 		return nil, nil, err
 	}

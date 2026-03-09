@@ -147,6 +147,28 @@ func TestGetAllFlightsHandler(t *testing.T) {
 	assert.Equal(t, 5678.9, actualFlights[0]["distance_m"])
 	assert.Equal(t, "FL001", actualFlights[1]["flight"])
 	assert.Equal(t, 1234.5, actualFlights[1]["distance_m"])
+
+	// Test with limit parameter
+	req, err = http.NewRequest("GET", "/all-flights?limit=1", nil)
+	assert.NoError(t, err)
+
+	rr = httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	err = json.Unmarshal(rr.Body.Bytes(), &actualFlights)
+	assert.NoError(t, err)
+	assert.Len(t, actualFlights, 1)
+	assert.Equal(t, "FL002", actualFlights[0]["flight"])
+
+	// Test with invalid limit parameter
+	req, err = http.NewRequest("GET", "/all-flights?limit=abc", nil)
+	assert.NoError(t, err)
+
+	rr = httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
 }
 func TestGetStatsHandler(t *testing.T) {
 	// Create a new in-memory database for testing
