@@ -379,7 +379,18 @@ func (s *Server) getStatsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) getAllFlightsHandler(w http.ResponseWriter, r *http.Request) {
-	flights, lastSeens, err := s.db.GetAllFlights()
+	limitStr := r.URL.Query().Get("limit")
+	limit := 0
+	if limitStr != "" {
+		var err error
+		limit, err = strconv.Atoi(limitStr)
+		if err != nil {
+			http.Error(w, "invalid limit parameter", http.StatusBadRequest)
+			return
+		}
+	}
+
+	flights, lastSeens, err := s.db.GetAllFlights(limit)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
