@@ -39,7 +39,7 @@ type Server struct {
 
 // formatTimeAgo returns a human-readable string indicating how long ago a time was.
 func formatTimeAgo(t time.Time) string {
-	d := time.Since(t)
+	d := time.Since(t).Truncate(time.Minute)
 	if d < time.Minute {
 		return "just now"
 	}
