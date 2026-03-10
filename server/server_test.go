@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/carlo-colombo/sopra/config"
 	"github.com/carlo-colombo/sopra/database"
@@ -170,6 +171,49 @@ func TestGetAllFlightsHandler(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, rr.Code)
 }
+
+func TestFormatTimeAgo(t *testing.T) {
+	now := time.Now()
+	tests := []struct {
+		name     string
+		t        time.Time
+		expected string
+	}{
+		{
+			name:     "Just now",
+			t:        now.Add(-30 * time.Second),
+			expected: "just now",
+		},
+		{
+			name:     "1 minute ago",
+			t:        now.Add(-1 * time.Minute),
+			expected: "1 minute ago",
+		},
+		{
+			name:     "1 minute 30 seconds ago",
+			t:        now.Add(-1*time.Minute - 30*time.Second),
+			expected: "1 minute ago",
+		},
+		{
+			name:     "1 hour 1 minute ago",
+			t:        now.Add(-1*time.Hour - 1*time.Minute),
+			expected: "1 hour and 1 minute ago",
+		},
+		{
+			name:     "1 hour 1 minute 30 seconds ago",
+			t:        now.Add(-1*time.Hour - 1*time.Minute - 30*time.Second),
+			expected: "1 hour and 1 minute ago",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := formatTimeAgo(tt.t)
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}
+
 func TestGetStatsHandler(t *testing.T) {
 	// Create a new in-memory database for testing
 	db := newTestDB(t)
